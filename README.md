@@ -1,5 +1,9 @@
 # AccountManager
 
+This is a very simple Account Manager made in ElectronJS
+-=[Note]=-
+I am new to programming and I know that my code is not very good and optimal
+
 ![image](https://user-images.githubusercontent.com/97565183/160770766-d2be9ad6-3caf-473f-b1dc-0a1daadcac90.png)
 
 ![image](https://user-images.githubusercontent.com/97565183/160770819-d62cfdf5-1c8c-467b-8e7d-0d70568ff3d4.png)
