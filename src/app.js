@@ -10,15 +10,16 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1090,
     height: 630,
-    title: 'AccountManager',
-    minWidth:800,
+    title: "AccountManager",
+    minWidth: 800,
     minHeight: 580,
+    icon: path.join(__dirname, "img/Logo_color.png"),
     frame: false,
-    backgroundColor: '#1B1B1B',
-    webPreferences:{
+    backgroundColor: "#1B1B1B",
+    webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
-    }
+      contextIsolation: false,
+    },
   });
 
   mainWindow.loadFile(path.join(__dirname, 'pages/content.html'));

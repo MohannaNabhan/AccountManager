@@ -1,52 +1,60 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@400;500;700&display=swap');
-*{
-    margin: 0;
-    font-family: "Poppins" , sans-serif;
-    color: white;
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@400;500;700&display=swap");
+* {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  color: white;
 }
-:root{
-    --color_primary:rgb(28,229,242);
-    --color_primary_middle:rgb(56,166,173);
-    --backgroud_Color:rgb(27,27,27);
-    --NavBar_Color: rgb(20,20,20);
+:root {
+  --color_primary: rgb(28, 229, 242);
+  --color_primary_middle: rgb(56, 166, 173);
+  --backgroud_Color: rgb(27, 27, 27);
+  --NavBar_Color: rgb(20, 20, 20);
 }
-body{
-    outline: none;
-    background-color: var(--backgroud_Color);
-    color: white;
+body {
+  outline: none;
+  background-color: var(--backgroud_Color);
+  color: white;
 }
-::-webkit-scrollbar{
-    width: 5px;
-    border-radius: 50%;
+::-webkit-scrollbar {
+  width: 5px;
+  border-radius: 50%;
 }
-::-webkit-scrollbar-thumb{
-    background: rgb(41, 41, 41);
-    border-radius: 5px;
+::-webkit-scrollbar-thumb {
+  background: rgb(41, 41, 41);
+  border-radius: 5px;
 }
-::-webkit-scrollbar-thumb:hover{
-    background:  rgb(41, 41, 41);
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(41, 41, 41);
 }
-::-webkit-scrollbar-track{
-    background: rgb(31, 31, 31);
-    border-radius: 0px;
-    box-shadow: inset 0px 0px 0px 0px var(--backgroud_Color);
+::-webkit-scrollbar-track {
+  background: rgb(31, 31, 31);
+  border-radius: 0px;
+  box-shadow: inset 0px 0px 0px 0px var(--backgroud_Color);
 }
-.text-color{
-    color: var(--color_primary) !important;
+.text-color {
+  color: var(--color_primary) !important;
 }
-.text-shadow{
-    letter-spacing: 0.4px;
-    text-shadow: 0px 0px 8px var(--color_primary) !important;
+.text-shadow {
+  letter-spacing: 0.4px;
+  text-shadow: 0px 0px 8px var(--color_primary) !important;
 }
 .drag {
-    -webkit-app-region: drag;
+  -webkit-app-region: drag;
 }
 
-
-
-
-#header-frame-custom{
+#github-button {
+  -webkit-app-region: no-drag; 
+  border-style: none;
+  background: transparent;
+  cursor: pointer;
+  transition: ease-in 500ms;
+  transition: ease-out 100ms;
+}
+#github-button:hover{
+  transform: scale(1.15);
+}
+#header-frame-custom {
   z-index: 99999999;
   width: 100%;
   height: 40px;
@@ -54,31 +62,31 @@ body{
   left: 0;
   top: 0;
 }
-#header-frame-custom img{
-  width: 30px;
+#header-frame-custom img {
+  width: 25px;
   position: absolute;
   left: 15px;
-  top: 3px;
+  top: 5px;
 }
-#header-frame-custom h1{
+#header-frame-custom h1 {
   position: absolute;
-  top: 7.5px;
+  top: 8.5px;
   letter-spacing: 0.8px;
   left: 50px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  color: rgb(210,210,210);
+  color: rgb(210, 210, 210);
 }
-#header-frame-custom .line{
+#header-frame-custom .line {
   width: 95%;
   height: 1px;
   position: absolute;
   bottom: 1px;
   left: 3%;
-  background-color: rgb(32,32,32);
+  background-color: rgb(32, 32, 32);
   border-radius: 4px;
 }
-#header-frame-custom .btn{
+#header-frame-custom .btn {
   outline: none;
   position: absolute;
   right: 0;
@@ -90,18 +98,16 @@ body{
   -webkit-app-region: no-drag !important;
   font-size: 13px;
 }
-#header-frame-custom .btn:hover{
-  background: rgb(50,50,50,0.5);
+#header-frame-custom .btn:hover {
+  background: rgb(50, 50, 50, 0.5);
 }
-#header-frame-custom #close-btn:hover{
+#header-frame-custom #close-btn:hover {
   background: var(--color_primary_middle);
 }
 
-
-
-#alert{
+#alert {
   pointer-events: none;
-  transition: all .4s ease-in-out;
+  transition: all 0.4s ease-in-out;
   position: fixed;
   right: 7px;
   bottom: 10px;
@@ -113,11 +119,11 @@ body{
   z-index: 99999999;
   border-width: 1.5px;
 }
-.alert-show{
+.alert-show {
   opacity: 1 !important;
   height: 40px;
 }
-#alert i{
+#alert i {
   text-align: center;
   font-size: 20px;
   padding-top: 12px;
@@ -127,7 +133,7 @@ body{
   width: 60px;
   height: 100%;
 }
-#alert h1{
+#alert h1 {
   position: absolute;
   left: 60px;
   top: calc(100% / 2 - 9px);
@@ -137,124 +143,111 @@ body{
   color: rgba(255, 255, 255, 0.815);
 }
 
-
-
-
-#category-list-back{
+#category-list-back {
   position: fixed;
   left: 0px;
   top: 50px;
   width: 280px;
   height: 91%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-top: 20px;
+  padding-bottom: 50px;
 }
-#category-list-back .line{
+#category-list-back .line {
   position: absolute;
   right: 1px;
-  background-color: rgb(32,32,32);
+  background-color: rgb(32, 32, 32);
   top: 3%;
   width: 1px;
   height: 95%;
   z-index: 999999;
 }
-#category-list-back #tittle{
-  position: relative;
+#category-list-back #tittle {
+  background: var(--backgroud_Color);
+  position: fixed;
+  top: 50px;
+  width: 264px;
+  z-index: 99;
   font-size: 12px;
   letter-spacing: 1px;
-  color: rgb(200, 200,200,0.8);
-  left: 10px;
+  color: rgb(200, 200, 200, 0.8);
+  left: 0;
+  padding-left: 10px;
 }
-.category-list-item{
-  box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.35);
+.category-list-item {
+  overflow: hidden;
+  box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.35);
   outline: none;
   position: relative;
-  left: 5%;
+  left: 3.5%;
   width: 90%;
-  height: 50px;
-  background-color: rgb(34, 34, 34,0.6);
-  margin-top: 8px;
+  padding: 10px 5px 10px 5px;
+  background-color: rgb(34, 34, 34, 0.6);
+  margin-bottom: 5px;
   border-radius: 15px;
   cursor: pointer;
+
+  display: flex;
+  justify-content: center;
   -webkit-app-region: no-drag;
 }
-.category-list-item h1{
+#category-list-back :last-child {
+  margin-bottom: 20px;
+}
+.category-list-item h2 {
   pointer-events: none;
-  position: absolute;
-  width: 90%;
-  left: 5%;
   height: 100%;
-  font-size: 19px;
-  text-align: center;
-  padding-top: 10px;
+  font-size: 16px;
   font-weight: 500;
   letter-spacing: 1px;
-  color: rgb(200, 200,200,0.8);
-  
+  color: rgb(200, 200, 200, 0.8);
 }
-.category-list-item:hover{
-  background-color: rgb(40,40,40);
+.category-list-item:hover {
+  background-color: rgb(40, 40, 40);
 }
-.category-list-item:hover h1{
-  color: rgb(230,230,230);
+.category-list-item:hover h2 {
+  color: rgb(230, 230, 230);
 }
-#category-list-back .add-category{
-  width: 88%;
-  height: 48px;
+
+#category-list-back .add-category {
   background-color: transparent !important;
+
   border-style: dashed;
-  border-color: rgb(40, 40, 40,0.6);
+  border-color: rgb(40, 40, 40, 0.6);
   border-width: 2px;
+  left: 3.5%;
+  width: 88.6%;
+  display: flex;
+  height: 20px;
+  align-items: center;
 }
-#category-list-back .add-category:hover{
-  background-color: rgb(46,46,46,0.8) !important;
-  border-color: rgb(46, 46, 46,0.6);
+#category-list-back .add-category:hover {
+  background-color: rgb(46, 46, 46, 0.8) !important;
+  border-color: rgb(46, 46, 46, 0.6);
 }
-#category-list-back .add-category h1{ 
-  padding-top: 5px;
+#category-list-back .add-category h2 {
   font-size: 28px;
   font-weight: 400;
 }
-#category-list-back .edit-category{
+
+#category-list-back .edit-category {
   width: 30px;
   height: 22px;
   position: absolute;
   right: 5px;
   top: calc(100% / 2 - 15px);
   text-align: center;
-  font-size: 15px;
+  font-size: 16px;
   border-radius: 50%;
-  background-color: rgb(40,40,40);
-  color: rgb(200, 200,200,0.8);
+  color: rgb(200, 200, 200, 0.8);
   padding-top: 8px;
 }
-#category-list-back .edit-category:hover{
-  background-color: rgb(30,30,30);
-  color: rgb(230,230,230);
-}
-#category-list-back #settings-btn{
-  outline: none;
-  -webkit-app-region: no-drag;
-  position: absolute;
-  bottom: 0px;
-  right: 10px;
-  background-color: transparent;
-  border-style: none;
-  font-size: 19px;
-  cursor: pointer;
-}
-#category-list-back #settings-btn i{
-  color: rgb(200, 200,200,0.8);
-}
-#category-list-back #settings-btn:hover i{
-  color: rgb(230,230,230);
+#category-list-back .edit-category:hover {
+  color: rgb(230, 230, 230);
 }
 
-
-
-
-
-
-
-#account-information-back{
+#account-information-back {
   position: absolute;
   left: 285px;
   top: 40px;
@@ -263,93 +256,88 @@ body{
   overflow-y: scroll;
   overflow-x: hidden;
 }
-#account-information-back .account-information-item{
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.45);
+#account-information-back .account-information-item {
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.45);
   cursor: pointer;
   position: relative;
   width: 98%;
   left: 1%;
   height: 110px;
   margin-top: 10px;
-  background-color: rgb(34, 34, 34,0.4);
+  background-color: rgb(34, 34, 34, 0.4);
   border-radius: 5px;
   outline: none;
   border-style: none;
-
 }
-#account-information-back .account-information-item h1{
-  position: absolute;
-  left: 120px;
-  top: 15px;
-  font-size: 20px;
-  color: rgb(200, 200,200,0.8);
-}
-#account-information-back .account-information-item .icon{
+#account-information-back .account-information-item .icon {
   position: absolute;
   left: 40px;
   top: 30px;
   font-size: 50px;
-  color: rgb(200, 200,200,0.8);
+  color: rgb(200, 200, 200, 0.8);
 }
-#account-information-back .account-information-item h2{
+#account-information-back .account-information-item h1 {
   position: absolute;
   left: 120px;
-  top: 42px;
-  font-size: 16px;
-  color: rgb(200, 200,200,0.8);
+  top: 16px;
+  font-size: 18px;
+  color: rgb(200, 200, 200, 0.8);
+}
+#account-information-back .account-information-item h2 {
+  position: absolute;
+  left: 120px;
+  top: 45px;
+  font-size: 14px;
+  color: rgb(200, 200, 200, 0.8);
   font-weight: 400;
   letter-spacing: 1px;
 }
-#account-information-back .account-information-item h3{
+#account-information-back .account-information-item h3 {
   position: absolute;
   left: 120px;
   top: 65px;
-  font-size: 16px;
-  color: rgb(200, 200,200,0.8);
+  font-size: 14px;
+  color: rgb(200, 200, 200, 0.8);
   font-weight: 200;
   letter-spacing: 1px;
 }
-#account-information-back .account-information-item .icon-2{
+#account-information-back .account-information-item .icon-2 {
   position: absolute;
   right: 30px;
   top: 35px;
   font-size: 45px;
-  color: rgb(200, 200,200,0.8);
+  color: rgb(200, 200, 200, 0.8);
 }
-#account-information-back .account-information-item:hover{
-  background-color: rgb(40,40,40);
+#account-information-back .account-information-item:hover {
+  background-color: rgb(40, 40, 40);
 }
-#account-information-back .account-information-item:hover i{
-  color: rgb(230,230,230);
+#account-information-back .account-information-item:hover i {
+  color: rgb(230, 230, 230);
 }
-#account-information-back .account-information-item:hover h1{
-  color: rgb(230,230,230);
+#account-information-back .account-information-item:hover h1 {
+  color: rgb(230, 230, 230);
 }
-#account-information-back .account-information-item:hover h2{
-  color: rgb(230,230,230);
+#account-information-back .account-information-item:hover h2 {
+  color: rgb(230, 230, 230);
 }
-#account-information-back .account-information-item:hover h3{
-  color: rgb(230,230,230);
+#account-information-back .account-information-item:hover h3 {
+  color: rgb(230, 230, 230);
 }
-#account-information-back .account-add{
-    background-color: transparent ;
-    border-style: dashed;
-    border-width: 2px;
-    border-color:rgb(40,40,40);
+#account-information-back .account-add {
+  background-color: transparent;
+  border-style: dashed;
+  border-width: 2px;
+  border-color: rgb(40, 40, 40);
 }
-#account-information-back .account-add h1{
+#account-information-back .account-add h1 {
   font-weight: 300;
-  font-size: 60px;
+  font-size: 45px;
   position: absolute;
   left: calc(100% / 2 - 10px);
-  top: calc(100% / 2 - 40px);
+  top: calc(100% / 2 - 32px);
 }
 
-
-
-
-
-#window-info-back-full{
+#window-info-back-full {
   opacity: 0;
   visibility: hidden;
   position: fixed;
@@ -360,32 +348,32 @@ body{
   backdrop-filter: blur(16px);
   z-index: 9999999;
 }
-#window-info-back{
+#window-info-back {
   opacity: 0;
   visibility: hidden;
   overflow: hidden;
   position: absolute;
   left: calc(100% / 2 - 290px);
   top: calc(100% / 2 - 180px);
-  background-color: rgb(37,37,37);
+  background-color: rgb(37, 37, 37);
   width: 580px;
   height: 360px;
   z-index: 99999999;
   border-radius: 8px;
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.4);
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.4);
 }
-.visible-window-info{
+.visible-window-info {
   visibility: visible !important;
   opacity: 1 !important;
 }
-#window-info-back #window-info-header{
+#window-info-back #window-info-header {
   position: relative;
   width: 100%;
   height: 40px;
-  background-color: rgb(43,43,43);
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.55);
+  background-color: rgb(43, 43, 43);
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.55);
 }
-#window-info-back #window-info-header h1{
+#window-info-back #window-info-header h1 {
   font-size: 15px;
   letter-spacing: 1px;
   font-weight: 400;
@@ -394,18 +382,18 @@ body{
   left: 10px;
   pointer-events: none;
 }
-#window-info-back #window-info-header #window-info-close{
+#window-info-back #window-info-header #window-info-close {
   cursor: pointer;
   position: absolute;
   right: 14px;
   top: 9px;
   font-size: 19px;
-  color: rgb(200, 200,200,0.8);
+  color: rgb(200, 200, 200, 0.8);
 }
-#window-info-back #window-info-header #window-info-close:hover{
-  color: rgb(230,230,230);
+#window-info-back #window-info-header #window-info-close:hover {
+  color: rgb(230, 230, 230);
 }
-#window-info-back #window-info-body{
+#window-info-back #window-info-body {
   position: relative;
   left: 4px;
   top: 4px;
@@ -413,19 +401,18 @@ body{
   height: calc(100% - 50px);
 }
 
-
-#window-info-back #window-info-body .input-back{
-    position: absolute;
-    top: 10px;
-    width: 90%;
-    height: 40px;
-    background-color: rgb(47,47,47);
-    left: 5%;
-    border-radius: 7px;
-    overflow: hidden;
-    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.25);
+#window-info-back #window-info-body .input-back {
+  position: absolute;
+  top: 10px;
+  width: 90%;
+  height: 40px;
+  background-color: rgb(47, 47, 47);
+  left: 5%;
+  border-radius: 7px;
+  overflow: hidden;
+  box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.25);
 }
-#window-info-back #window-info-body .input-back .icon{
+#window-info-back #window-info-body .input-back .icon {
   position: absolute;
   top: 0;
   width: 40px;
@@ -435,7 +422,7 @@ body{
   background-color: var(--color_primary_middle);
   padding-top: 10px;
 }
-#window-info-back #window-info-body .input-back .icon-function{
+#window-info-back #window-info-body .input-back .icon-function {
   position: absolute;
   width: 40px;
   height: 40px;
@@ -446,22 +433,22 @@ body{
   font-size: 16px;
   backdrop-filter: blur(7px);
   border-radius: 7px;
-  color: rgb(200, 200,200,0.8);
+  color: rgb(200, 200, 200, 0.8);
   cursor: pointer;
 }
-#window-info-back #window-info-body .input-back .icon-function:hover{
-  color: rgb(230,230,230);
+#window-info-back #window-info-body .input-back .icon-function:hover {
+  color: rgb(230, 230, 230);
 }
-#window-info-back #window-info-body .input-back input{
-    position: absolute;
-    width: calc(100% - 54px);
-    height: 100%;
-    left: 45px;
-    background-color: transparent;
-    border-style: none;
-    outline: none;
+#window-info-back #window-info-body .input-back input {
+  position: absolute;
+  width: calc(100% - 54px);
+  height: 100%;
+  left: 45px;
+  background-color: transparent;
+  border-style: none;
+  outline: none;
 }
-#window-info-back #window-info-body .btn-event{
+#window-info-back #window-info-body .btn-event {
   outline: none;
   position: absolute;
   width: 120px;
@@ -473,31 +460,8 @@ body{
   border-radius: 10px;
   cursor: pointer;
   font-weight: 500;
-  color: rgb(200, 200,200,0.8);
+  color: rgb(200, 200, 200, 0.8);
 }
-#window-info-back #window-info-body .btn-event:hover{
-  color: rgb(230,230,230);
-
+#window-info-back #window-info-body .btn-event:hover {
+  color: rgb(230, 230, 230);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
