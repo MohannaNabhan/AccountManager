@@ -59,6 +59,7 @@ input.addEventListener("keyup", function (event) {
     location.reload(true);
   }
 });
+
 function word_random(length) {
   let chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$%&€#";
@@ -334,9 +335,16 @@ function window_events(title, data) {
                 `;
           document.querySelectorAll(".icon-function").forEach((btn) => {
             btn.addEventListener("click", (e) => {
-              navigator.clipboard.writeText(
-                e.target.parentElement.querySelector("input").value
-              );
+              const textToCopy =
+                e.target.parentElement.querySelector("input").value;
+              navigator.clipboard
+                .writeText(textToCopy)
+                .then(() => {
+                  notification("Alert:GOOD", "Copied to clipboard");
+                })
+                .catch(() => {
+                  notification("Alert:ERROR", "Failed to copy");
+                });
             });
           });
           document
@@ -501,7 +509,7 @@ function draw_accounts(category) {
             .addEventListener("click", (e) => {
               window_events("Create New Account", "");
             });
-        },100);
+        }, 100);
         for (i = 0; i < files.length; i++) {
           if (
             files[i].charAt(files[i].length - 15) +
@@ -637,3 +645,102 @@ function draw_category() {
   });
 }
 draw_category();
+function search_accounts(searchText) {
+  const categoriesPath = path_db + "/Category";
+  const resultsContainer = document.getElementById("account-information-back");
+  resultsContainer.innerHTML = ``;
+
+  fs.readdir(categoriesPath, (err, categories) => {
+    if (err || !categories.length) {
+      notification("Alert:ERROR", "No se pudieron leer las categorías");
+      return;
+    }
+
+    // Si el texto está vacío, simplemente carga la primera categoría
+    if (searchText.trim() === "") {
+      const firstCategory = categories[0];
+      draw_accounts(firstCategory); // Usa tu función existente
+      return;
+    }
+
+    let file_load = 0;
+    let file_total = 0;
+
+    categories.forEach((category) => {
+      const categoryPath = `${categoriesPath}/${category}`;
+
+      fs.readdir(categoryPath, (err, files) => {
+        if (err) {
+          console.error("No se pudo leer la categoría:", category);
+          return;
+        }
+
+        files.forEach((file) => {
+          const isAMFile =
+            file.charAt(file.length - 15) +
+              file.charAt(file.length - 14) +
+              file.charAt(file.length - 7) ===
+            ".AM";
+
+          if (isAMFile) {
+            file_total++;
+            const filePath = `${categoryPath}/${file}`;
+            fs.readFile(filePath, "utf8", (err, data) => {
+              if (!err) {
+                const [service, user, password] = data.split("|/|");
+
+                if (
+                  service.toLowerCase().includes(searchText.toLowerCase()) ||
+                  user.toLowerCase().includes(searchText.toLowerCase())
+                ) {
+                  resultsContainer.innerHTML += `
+                    <button class="account-information-item account-view">
+                        <i class="icon fad fa-user"></i>
+                        <h1 id="file-name" hidden>${file}</h1>
+                        <h1>${service}</h1>
+                        <h2>User: ${user}</h2>
+                        <h3>Password: ${"*".repeat(
+                          Math.floor(Math.random() * (25 - 5 + 1)) + 5
+                        )}</h3>
+                        <i class="icon-2 fad fa-angle-right"></i>
+                    </button>
+                  `;
+                }
+              }
+              file_load++;
+
+              if (file_load === file_total) {
+                setTimeout(() => {
+                  document.querySelectorAll(".account-view").forEach((btn) => {
+                    btn.addEventListener("click", (e) => {
+                      if (e.target.classList.contains("account-view")) {
+                        window_events("View Information", e.target);
+                      } else if (
+                        e.target.parentElement.classList.contains(
+                          "account-view"
+                        )
+                      ) {
+                        window_events(
+                          "View Information",
+                          e.target.parentElement
+                        );
+                      }
+                    });
+                  });
+                }, 100);
+              }
+            });
+          }
+        });
+      });
+    });
+  });
+}
+
+document.getElementById("search-input").addEventListener("keyup", (e) => {
+  search_accounts(e.target.value);
+});
+document.getElementById("search-btn-delete").addEventListener("click", (e) => {
+  document.getElementById("search-input").value = "";
+  search_accounts("");
+});
