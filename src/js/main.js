@@ -736,10 +736,16 @@ function search_accounts(searchText) {
     });
   });
 }
+let debounceTimer;
+const DEBOUNCE_DELAY = 200;
 
 document.getElementById("search-input").addEventListener("keyup", (e) => {
-  search_accounts(e.target.value);
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    search_accounts(e.target.value);
+  }, DEBOUNCE_DELAY);
 });
+
 document.getElementById("search-btn-delete").addEventListener("click", (e) => {
   document.getElementById("search-input").value = "";
   search_accounts("");
