@@ -23,7 +23,7 @@ const createWindow = () => {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'pages/content.html'));
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
 };
 ipcMain.on('event:window', (e,type) =>{
   if(type == "minimize"){
