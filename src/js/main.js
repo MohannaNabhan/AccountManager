@@ -300,11 +300,12 @@ function window_events(title, data) {
       }
     });
   } else if (title == "View Information") {
-    file_name = data.querySelector("#file-name").textContent;
+    let file_name = data.querySelector("#file-name").textContent;
+    let category_name = data.querySelector("#category-name").textContent;
     fs.readFile(
       path_db +
         "/Category/" +
-        category_load +
+        category_name +
         "/" +
         data.querySelector("#file-name").textContent,
       "utf8",
@@ -350,17 +351,19 @@ function window_events(title, data) {
           document
             .querySelector("#edit-account")
             .addEventListener("click", (e) => {
-              window_events("Edit Information", file_name);
+              window_events("Edit Information", { file_name, category_name });
             });
         }
       }
     );
   } else if (title == "Edit Information") {
-    let file_name = data;
+    let file_name = data.file_name;
+    let category_name = data.category_name;
     fs.readFile(
-      path_db + "/Category/" + category_load + "/" + data,
+      path_db + "/Category/" + category_name + "/" + data.file_name,
       "utf8",
       (err, data) => {
+        console.log(err);
         if (!err) {
           document.getElementById("window-info-body").innerHTML = `
                 <div class="input-back">
@@ -437,7 +440,7 @@ function window_events(title, data) {
                 );
               } else {
                 fs.writeFile(
-                  path_db + "/Category/" + category_load + "/" + file_name,
+                  path_db + "/Category/" + category_name + "/" + file_name,
                   `${service}|/|${user}|/|${password}`,
                   function (err) {
                     if (err) {
@@ -450,8 +453,9 @@ function window_events(title, data) {
                         .getElementById("window-info-back")
                         .classList.remove("visible-window-info");
                       setTimeout(() => {
-                        let back_category = category_load;
-                        category_load = "";
+                        let back_category = category_name;
+                        category_load = " ";
+                        category_name = "";
                         draw_accounts(back_category);
                         notification("Alert:GOOD", "Saved Information");
                       }, 100);
@@ -464,7 +468,7 @@ function window_events(title, data) {
             .querySelector("#delete-account")
             .addEventListener("click", (e) => {
               fs.unlink(
-                path_db + "/Category/" + category_load + "/" + file_name,
+                path_db + "/Category/" + category_name + "/" + file_name,
                 (err) => {
                   if (err) {
                     notification("Alert:ERROR", "Can't Delete Account");
@@ -478,8 +482,9 @@ function window_events(title, data) {
                       .classList.remove("visible-window-info");
                     notification("Alert:GOOD", "Account Deleted");
                     setTimeout(() => {
-                      let back_category = category_load;
-                      category_load = "";
+                      let back_category = category_name;
+                      category_load = " ";
+                      category_name = "";
                       draw_accounts(back_category);
                       notification("Alert:GOOD", "Account Deleted");
                     }, 100);
@@ -528,6 +533,8 @@ function draw_accounts(category) {
                   ).innerHTML += `
                                    <button class="account-information-item account-view">
                                        <i class="icon fad fa-user"></i>
+                                       
+                                       <h1 id="category-name" hidden>${category}</h1>
                                        <h1 id="file-name" hidden>${file_name}</h1>
                                        <h1>${data.split("|/|")[0]}</h1>
                                        <h2>Email: ${"*".repeat(
@@ -697,6 +704,7 @@ function search_accounts(searchText) {
                     <button class="account-information-item account-view">
                         <i class="icon fad fa-user"></i>
                         <h1 id="file-name" hidden>${file}</h1>
+                        <h1 id="category-name" hidden>${category}</h1>
                         <h1>${service}</h1>
                         <h2>User: ${user}</h2>
                         <h3>Password: ${"*".repeat(
@@ -742,11 +750,14 @@ const DEBOUNCE_DELAY = 200;
 document.getElementById("search-input").addEventListener("keyup", (e) => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
+    category_load = "";
     search_accounts(e.target.value);
   }, DEBOUNCE_DELAY);
 });
 
 document.getElementById("search-btn-delete").addEventListener("click", (e) => {
   document.getElementById("search-input").value = "";
-  search_accounts("");
+  setTimeout(() => {
+    draw_category();
+  }, 200);
 });
