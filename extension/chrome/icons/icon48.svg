@@ -1,0 +1,21 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="48" height="48" rx="8" fill="url(#gradient48)"/>
+  <rect x="8" y="12" width="32" height="24" rx="4" fill="white" fill-opacity="0.95"/>
+  <circle cx="24" cy="20" r="4" fill="url(#gradient48)"/>
+  <rect x="18" y="28" width="12" height="2" rx="1" fill="url(#gradient48)"/>
+  <rect x="20" y="32" width="8" height="1.5" rx="0.75" fill="url(#gradient48)" fill-opacity="0.7"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="14" cy="16" r="1" fill="white" fill-opacity="0.6"/>
+  <circle cx="34" cy="16" r="1" fill="white" fill-opacity="0.6"/>
+  <rect x="12" y="24" width="2" height="1" rx="0.5" fill="url(#gradient48)" fill-opacity="0.5"/>
+  <rect x="34" y="24" width="2" height="1" rx="0.5" fill="url(#gradient48)" fill-opacity="0.5"/>
+  
+  <defs>
+    <linearGradient id="gradient48" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#667eea"/>
+      <stop offset="0.5" stop-color="#764ba2"/>
+      <stop offset="1" stop-color="#5a67d8"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Account Manager Extension",
+  "version": "1.0.0",
+  "description": "Extensión para comunicarse con Account Manager Desktop",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "nativeMessaging",
+    "tabs",
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "externally_connectable": {
+    "matches": ["<all_urls>"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Account Manager",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["welcome.html", "welcome.js", "config.js", "utils.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
