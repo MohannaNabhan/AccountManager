@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Función para verificar la conexión con Account Manager
     async function checkConnection() {
         setLoadingState(true);
-        updateStatus('checking', 'Verificando conexión...', 'Comprobando si Account Manager está disponible');
+        updateStatus('checking', 'Checking connection...', 'Verifying if Account Manager is available');
 
         try {
             const response = await fetch('http://localhost:8765/status', {
@@ -33,10 +33,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Conexión exitosa:', data);
+                console.log('Connection successful:', data);
                 
-                updateStatus('success', '✅ Conexión Exitosa', 
-                    `Account Manager está funcionando correctamente. Versión: ${data.version || 'N/A'}`);
+                updateStatus('success', '✅ Connection Successful', 
+                    `Account Manager is running correctly. Version: ${data.version || 'N/A'}`);
                 
                 // Guardar estado de conexión
                 await saveConnectionStatus(true);
@@ -48,19 +48,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
         } catch (error) {
-            console.error('Error de conexión:', error);
+            console.error('Connection error:', error);
             
-            let errorMessage = 'No se pudo conectar con Account Manager. ';
+            let errorMessage = 'Could not connect to Account Manager. ';
             
             if (error.name === 'AbortError') {
-                errorMessage += 'La conexión tardó demasiado tiempo.';
+                errorMessage += 'The connection timed out.';
             } else if (error.message.includes('Failed to fetch')) {
-                errorMessage += 'Asegúrate de que la aplicación esté ejecutándose.';
+                errorMessage += 'Ensure the application is running.';
             } else {
                 errorMessage += error.message;
             }
             
-            updateStatus('error', '❌ Error de Conexión', errorMessage);
+            updateStatus('error', '❌ Connection Error', errorMessage);
             
             // Guardar estado de conexión
             await saveConnectionStatus(false);
@@ -79,31 +79,29 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
-                console.log('Account Manager abierto exitosamente');
-                updateStatus('success', '✅ Aplicación Abierta', 
-                    'Account Manager se ha abierto en primer plano');
+                console.log('Account Manager opened successfully');
+                updateStatus('success', '✅ Application Opened', 
+                    'Account Manager has been opened in the foreground');
             } else {
-                throw new Error('No se pudo abrir la aplicación');
+                throw new Error('Could not open the application');
             }
         } catch (error) {
-            console.error('Error abriendo Account Manager:', error);
+            console.error('Error opening Account Manager:', error);
             
             // Fallback: intentar abrir manualmente
             const userConfirm = confirm(
-                'No se pudo abrir Account Manager automáticamente.\n\n' +
-                '¿Deseas abrir manualmente la aplicación?\n' +
-                'Ubicación: c:\\Users\\titan\\Documents\\GitHub\\AccountManager\\src\\main\\index.js'
+                'Could not open Account Manager automatically.\n\n' +
+                'Do you want to open the application manually?\n' +
+                'Location: C:/AccountManager/'
             );
             
             if (userConfirm) {
                 // Mostrar instrucciones
                 alert(
-                    'Para abrir Account Manager manualmente:\n\n' +
-                    '1. Abre una terminal/PowerShell\n' +
-                    '2. Navega a: c:\\Users\\titan\\Documents\\GitHub\\AccountManager\n' +
-                    '3. Ejecuta: npm start\n' +
-                    '4. Espera a que la aplicación se inicie\n' +
-                    '5. Vuelve aquí y haz clic en "Verificar Conexión"'
+                    'To open Account Manager manually:\n\n' +
+                    '1. Open the installation folder\n' +
+                    '2. Run the application\n' +
+                    '3. Return here and click "Verify Connection"'
                 );
             }
         }
@@ -124,15 +122,20 @@ document.addEventListener('DOMContentLoaded', function() {
         statusMessage.textContent = message;
         
         // Remover clases anteriores
-        statusSection.classList.remove('error');
+        statusSection.classList.remove('connected', 'disconnected');
         
         // Agregar clase según el tipo
-        if (type === 'error') {
-            statusSection.classList.add('error');
+        if (type === 'success') {
+            statusSection.classList.add('connected');
+        } else if (type === 'error') {
+            statusSection.classList.add('disconnected');
+        } else {
+             // Default/Checking state
+             statusSection.classList.add('disconnected');
         }
         
         // Actualizar icono según el estado
-        const statusIcon = statusSection.querySelector('.status-icon');
+        const statusIcon = document.getElementById('status-icon');
         switch (type) {
             case 'checking':
                 statusIcon.textContent = '⏳';

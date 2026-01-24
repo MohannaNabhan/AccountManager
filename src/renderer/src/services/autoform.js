@@ -20,9 +20,9 @@ export const PERSONAL_TEMPLATE = {
   firstName: '',
   lastName: '',
   birthDate: '',
-  phone: '',
-  email: '',
-  gender: ''
+  phonePrefix: '',
+  phoneNumber: '',
+  email: ''
 }
 
 export const CREDIT_CARD_TEMPLATE = {

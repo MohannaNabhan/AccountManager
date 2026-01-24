@@ -12,6 +12,12 @@
     "http://*/*",
     "https://*/*"
   ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"]
+    }
+  ],
   "background": {
     "service_worker": "background-simple.js"
   },

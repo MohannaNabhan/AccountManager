@@ -27,7 +27,7 @@ let extensionStats = {
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1300,
+    width: 1440,
     height: 810,
     show: false,
     resizable: false,
@@ -162,6 +162,7 @@ function createHttpServer() {
         req.on('end', async () => {
           try {
             const requestData = JSON.parse(body)
+            console.log(`[Extension] Request: /form-data (Status: ${!currentProfile || !vaultKeys.has(currentProfile) ? 'LOCKED' : 'UNLOCKED'})`)
             const formData = await getFormDataForExtension(requestData)
             
             res.writeHead(200)
@@ -206,11 +207,46 @@ function createHttpServer() {
           }
         })
 
+      } else if (req.method === 'POST' && pathname === '/save-password-settings') {
+        // Endpoint para guardar ajustes de contraseña desde la extensión
+        let body = ''
+        req.on('data', chunk => {
+          body += chunk.toString()
+        })
+        
+        req.on('end', async () => {
+          try {
+            const settings = JSON.parse(body)
+            setData('passwordSettings', settings)
+            
+            // Notificar al renderer de la app que los ajustes cambiaron
+            if (mainWindow) {
+              mainWindow.webContents.send('storage:updated', { key: 'passwordSettings' })
+            }
+            
+            res.writeHead(200)
+            res.end(JSON.stringify({
+              success: true,
+              message: 'Ajustes de contraseña guardados'
+            }))
+          } catch (error) {
+            console.error('Error guardando ajustes de contraseña:', error)
+            res.writeHead(500)
+            res.end(JSON.stringify({
+              success: false,
+              error: error.message
+            }))
+          }
+        })
+
       } else if (req.method === 'POST' && pathname === '/show-app') {
         // Endpoint para mostrar la aplicación
         if (mainWindow) {
+          if (mainWindow.isMinimized()) mainWindow.restore()
           mainWindow.show()
           mainWindow.focus()
+          mainWindow.setAlwaysOnTop(true)
+          mainWindow.setAlwaysOnTop(false)
         }
         
         res.writeHead(200)
@@ -261,30 +297,39 @@ async function getFormDataForExtension(requestData) {
   }
 
   try {
-    // Obtener datos personales
-    const personalData = getData('autoform_personal') || {}
-    if (personalData.name) profileData.personal.name = personalData.name
-    if (personalData.firstName) profileData.personal.firstName = personalData.firstName
-    if (personalData.lastName) profileData.personal.lastName = personalData.lastName
-    if (personalData.phone) profileData.personal.phone = personalData.phone
+    const autoFormData = getData('autoFormData') || {}
+    console.log('Extension requesting data. Found autoFormData:', autoFormData)
+    
+    // Obtener datos de email
+    profileData.emails = autoFormData.email || []
+    
+    // Obtener otros datos si es necesario
+    profileData.addresses = autoFormData.address || []
+    profileData.personal = autoFormData.personal?.[0] || {}
+    profileData.creditCards = autoFormData.creditCard || []
+    profileData.passwordSettings = getData('passwordSettings') || {}
+    profileData.usernameSettings = getData('usernameSettings') || {}
 
-    // Obtener datos de email (primer email disponible)
-    const emailData = getData('autoform_email') || []
-    if (emailData.length > 0) {
-      const firstEmail = emailData[0]
-      profileData.email.email = firstEmail.email
-      profileData.email.name = firstEmail.name
-    }
+    // Add accounts and projects for search
+    try {
+      const projects = getData('projects') || []
+      const accounts = getData('accounts') || []
+      
+      // Map project names for easier search display
+      const projectMap = projects.reduce((acc, p) => {
+        acc[p.id] = p.name
+        return acc
+      }, {})
 
-    // Obtener datos de dirección (primera dirección disponible)
-    const addressData = getData('autoform_address') || []
-    if (addressData.length > 0) {
-      const firstAddress = addressData[0]
-      profileData.address.street = firstAddress.street
-      profileData.address.city = firstAddress.city
-      profileData.address.state = firstAddress.state
-      profileData.address.zipCode = firstAddress.zipCode
-      profileData.address.country = firstAddress.country
+      profileData.searchData = accounts
+        .filter(a => !a.deletedAt)
+        .map(a => ({
+          ...a,
+          projectName: projectMap[a.projectId] || 'Unknown Project'
+        }))
+    } catch (e) {
+      console.error('Error attaching accounts to extension data:', e)
+      profileData.searchData = []
     }
 
     return profileData
@@ -357,6 +402,25 @@ async function saveFormDataFromExtension(requestData) {
   }
 }
 
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    // Someone tried to run a second instance, we should focus our window.
+    if (mainWindow) {
+      if (!mainWindow.isVisible()) {
+        mainWindow.show()
+      }
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore()
+      }
+      mainWindow.focus()
+    }
+  })
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -408,7 +472,7 @@ app.on('before-quit', () => {
 import path from 'path'
 import Database from 'better-sqlite3'
 
-const dbFolder = path.join(app.getPath('userData'), 'db')
+const dbFolder = 'C:/AccountManager'
 // ensure folders exist
 try {
   fs.mkdirSync(dbFolder, { recursive: true })
@@ -426,9 +490,8 @@ try {
 } catch (error) {}
 
 // Vault state (in-memory)
-// Vault state (in-memory)
 let vaultKeys = new Map() // profileId -> Buffer
-let currentProfile = null // string id
+let currentProfile = 'default' // string id
 
 function getCurrentProfile() {
   try {

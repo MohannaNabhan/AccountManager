@@ -130,7 +130,7 @@ export default function SidebarLayout({ children }) {
   const [globalSearch, setGlobalSearch] = useState('')
   const [allAccounts, setAllAccounts] = useState([])
   const [showSearch, setShowSearch] = useState(false)
-  
+
   // Estados para configuración de contraseñas
   const [pwSettings, setPwSettings] = useState({
     length: 15,
@@ -146,17 +146,17 @@ export default function SidebarLayout({ children }) {
   }, [location.pathname])
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       setProjects(await getProjects())
       try {
         const notes = await getNotes()
         setNotesCount(notes.length)
-      } catch {}
+      } catch { }
       // Cargar todas las cuentas para búsqueda global
       try {
         const accounts = await getAccounts()
         setAllAccounts(Array.isArray(accounts) ? accounts : [])
-      } catch {}
+      } catch { }
       // Cargar configuración de contraseñas
       setPwSettings(await getPasswordSettings())
     })()
@@ -168,13 +168,13 @@ export default function SidebarLayout({ children }) {
         try {
           const accounts = await getAccounts()
           setAllAccounts(Array.isArray(accounts) ? accounts : [])
-        } catch {}
+        } catch { }
       }
       if (key === KEYS.NOTES_KEY) {
         try {
           const notes = await getNotes()
           setNotesCount(notes.length)
-        } catch {}
+        } catch { }
       }
       // Refresh profiles when they change anywhere (Settings, create/delete)
       if (key === KEYS.PROFILES_KEY || key === KEYS.CURRENT_PROFILE_KEY) {
@@ -192,12 +192,12 @@ export default function SidebarLayout({ children }) {
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        const v = await window.api?.app?.version?.()
-        if (mounted && typeof v === 'string') setAppVersion(v)
-      } catch {}
-    })()
+      ; (async () => {
+        try {
+          const v = await window.api?.app?.version?.()
+          if (mounted && typeof v === 'string') setAppVersion(v)
+        } catch { }
+      })()
     return () => {
       mounted = false
     }
@@ -239,7 +239,7 @@ export default function SidebarLayout({ children }) {
   }
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const st = await window.api.vault.status()
         const profRes = await window.api.vault.profiles.list()
@@ -461,7 +461,7 @@ export default function SidebarLayout({ children }) {
               </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-              <ConnectionStatus />
+
               <div className="text-xs text-muted-foreground px-3 pb-3">
                 {appVersion ? `v${appVersion}` : 'v...'}
               </div>
@@ -476,6 +476,7 @@ export default function SidebarLayout({ children }) {
                 {showSearch ? 'Resultados de búsqueda' : titleForPath(location.pathname)}
               </div>
               <div className="ml-auto flex items-center gap-2">
+                <ConnectionStatus />
                 <div className="relative">
                   <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
@@ -577,11 +578,11 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
   // Función para resaltar coincidencias de búsqueda
   function highlightMatch(text, searchTerm) {
     if (!text || !searchTerm) return text
-    
+
     const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
     const parts = text.split(regex)
-    
-    return parts.map((part, index) => 
+
+    return parts.map((part, index) =>
       regex.test(part) ? (
         <span key={index} className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">
           {part}
@@ -789,45 +790,45 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       )
     },
     {
-        id: 'actions',
-        enableHiding: false,
-        cell: ({ row }) => {
-          const a = row.original
-          return (
-            <div className="flex items-center gap-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">Detalles</Button>
-                </SheetTrigger>
-                <SheetContent className="duration-50 !max-w-none !w-[670px] px-4">
-                  <SheetHeader>
-                    <SheetTitle>Detalles de cuenta</SheetTitle>
-                    <SheetDescription>{a.email}</SheetDescription>
-                  </SheetHeader>
-                  <AccountDetails account={a} />
-                </SheetContent>
-              </Sheet>
-              <EditAccountDialog
-                account={a}
-                projectId={a.projectId}
-                pwSettings={pwSettings}
-                setPwSettings={setPwSettings}
-                mode="full"
-              />
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={async () => {
-                  await deleteAccount(a.id)
-                  toast.success('Cuenta eliminada')
-                }}
-              >
-                Eliminar
-              </Button>
-            </div>
-          )
-        }
+      id: 'actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        const a = row.original
+        return (
+          <div className="flex items-center gap-2">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm">Detalles</Button>
+              </SheetTrigger>
+              <SheetContent className="duration-50 !max-w-none !w-[670px] px-4">
+                <SheetHeader>
+                  <SheetTitle>Detalles de cuenta</SheetTitle>
+                  <SheetDescription>{a.email}</SheetDescription>
+                </SheetHeader>
+                <AccountDetails account={a} />
+              </SheetContent>
+            </Sheet>
+            <EditAccountDialog
+              account={a}
+              projectId={a.projectId}
+              pwSettings={pwSettings}
+              setPwSettings={setPwSettings}
+              mode="full"
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={async () => {
+                await deleteAccount(a.id)
+                toast.success('Cuenta eliminada')
+              }}
+            >
+              Eliminar
+            </Button>
+          </div>
+        )
       }
+    }
   ], [projects, searchTerm, forceShowCols])
 
   const table = useReactTable({
@@ -858,14 +859,14 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
   useEffect(() => {
     const currentPageSize = table.getState().pagination.pageSize
     const availableOptions = [7, 10, 20, 30, 40, 50]
-    
+
     // Si el pageSize actual es mayor que el número de cuentas (y no es "todas")
     if (currentPageSize > accounts.length && currentPageSize < 1000) {
       // Encontrar la opción más grande que sea válida
       const validOption = availableOptions
         .filter(size => size <= accounts.length)
         .sort((a, b) => b - a)[0] // Ordenar descendente y tomar el primero
-      
+
       if (validOption) {
         table.setPageSize(validOption)
       } else if (accounts.length > 0) {
@@ -960,7 +961,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
           </TableBody>
         </Table>
       </ContentScroll>
-      
+
       {/* Controles de paginación */}
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
@@ -985,8 +986,8 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
               </SelectTrigger>
               <SelectContent>
                 {[7, 10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem 
-                    key={pageSize} 
+                  <SelectItem
+                    key={pageSize}
                     value={String(pageSize)}
                     disabled={accounts.length < pageSize}
                   >
@@ -1000,8 +1001,8 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
             </Select>
           </div>
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            {table.getState().pagination.pageSize >= accounts.length ? 
-              `Todas (${accounts.length})` : 
+            {table.getState().pagination.pageSize >= accounts.length ?
+              `Todas (${accounts.length})` :
               `Página ${table.getState().pagination.pageIndex + 1} de ${table.getPageCount()}`
             }
           </div>

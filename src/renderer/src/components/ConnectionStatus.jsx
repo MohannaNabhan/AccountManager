@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import './ConnectionStatus.css';
+import React, { useState, useEffect } from 'react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { RefreshCw, Wifi, WifiOff, Server, Activity, Clock, Link as LinkIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const ConnectionStatus = () => {
   const [status, setStatus] = useState({
@@ -13,139 +17,142 @@ const ConnectionStatus = () => {
     serverRunning: false,
     serverPort: null,
     loading: true
-  });
+  })
 
-  const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    checkExtensionStatus();
-    
-    // Verificar estado cada 10 segundos
-    const interval = setInterval(checkExtensionStatus, 10000);
-    
-    return () => clearInterval(interval);
-  }, []);
+  const [isOpen, setIsOpen] = useState(false)
 
   const checkExtensionStatus = async () => {
+    setStatus(prev => ({ ...prev, loading: true }))
     try {
-      const result = await window.api.extension.getStatus();
+      const result = await window.api.extension.getStatus()
       setStatus({
         ...result,
         loading: false
-      });
+      })
     } catch (error) {
-      console.error('Error obteniendo estado de extensión:', error);
+      console.error('Error obteniendo estado de extensión:', error)
       setStatus(prev => ({
         ...prev,
         connected: false,
         loading: false
-      }));
+      }))
     }
-  };
+  }
+
+  useEffect(() => {
+    checkExtensionStatus()
+    // Verificar estado cada 10 segundos
+    const interval = setInterval(checkExtensionStatus, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
   const formatTime = (timestamp) => {
-    if (!timestamp) return 'Nunca';
-    return new Date(timestamp).toLocaleTimeString();
-  };
+    if (!timestamp) return 'Nunca'
+    return new Date(timestamp).toLocaleTimeString()
+  }
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'Nunca';
-    return new Date(timestamp).toLocaleDateString();
-  };
-
-  const getStatusColor = () => {
-    if (status.loading) return '#fbbf24'; // amarillo
-    return status.connected ? '#10b981' : '#ef4444'; // verde o rojo
-  };
-
-  const getStatusText = () => {
-    if (status.loading) return 'Verificando...';
-    return status.connected ? 'Extensión Conectada' : 'Extensión Desconectada';
-  };
+    if (!timestamp) return 'Nunca'
+    return new Date(timestamp).toLocaleDateString()
+  }
 
   return (
-    <div className="connection-status">
-      <div 
-        className="connection-status-header"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="status-indicator">
-          <div 
-            className="status-dot"
-            style={{ backgroundColor: getStatusColor() }}
-          />
-          <span className="status-text">{getStatusText()}</span>
-        </div>
-        
-        <div className="status-actions">
-          <button 
-            className="refresh-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              checkExtensionStatus();
-            }}
-            disabled={status.loading}
-          >
-            🔄
-          </button>
-          <span className={`expand-icon ${expanded ? 'expanded' : ''}`}>
-            ▼
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-2 h-9 px-2">
+          <div className={cn(
+            "h-2.5 w-2.5 rounded-full animate-pulse",
+            status.loading ? "bg-yellow-400" : (status.connected ? "bg-green-500" : "bg-red-500")
+          )} />
+          <span className="hidden md:inline text-sm font-medium text-muted-foreground hover:text-foreground">
+            {status.loading ? 'Verificando...' : (status.connected ? 'Extension Connected' : 'Extension Disconnected')}
           </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="end">
+        <div className="p-4 border-b bg-muted/40">
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="font-semibold leading-none">Estado de Extensión</h4>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={checkExtensionStatus}
+              disabled={status.loading}
+              title="Actualizar estado"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", status.loading && "animate-spin")} />
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {status.connected ? 'La extensión está conectada y funcionando.' : 'La extensión no se detecta.'}
+          </p>
         </div>
-      </div>
 
-      {expanded && (
-        <div className="connection-status-details">
-          <div className="status-grid">
-            <div className="status-item">
-              <label>Servidor HTTP:</label>
-              <span className={status.serverRunning ? 'status-ok' : 'status-error'}>
-                {status.serverRunning ? `Activo (Puerto ${status.serverPort})` : 'Inactivo'}
-              </span>
+        <div className="p-4 space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Server className="h-3.5 w-3.5" />
+                <span className="text-xs">Servidor HTTP</span>
+              </div>
+              <div className={cn("font-medium", status.serverRunning ? "text-green-600 dark:text-green-400" : "text-red-600")}>
+                {status.serverRunning ? `Activo (:${status.serverPort})` : 'Inactivo'}
+              </div>
             </div>
-            
-            <div className="status-item">
-              <label>Última Actividad:</label>
-              <span>{formatTime(status.lastActivity)}</span>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Activity className="h-3.5 w-3.5" />
+                <span className="text-xs">Actividad</span>
+              </div>
+              <div className="font-medium">
+                {formatTime(status.lastActivity)}
+              </div>
             </div>
-            
-            <div className="status-item">
-              <label>Conexiones Activas:</label>
-              <span>{status.stats.activeConnections}</span>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <LinkIcon className="h-3.5 w-3.5" />
+                <span className="text-xs">Conexiones</span>
+              </div>
+              <div className="font-medium">
+                {status.stats?.activeConnections || 0} / {status.stats?.totalConnections || 0}
+              </div>
             </div>
-            
-            <div className="status-item">
-              <label>Total Conexiones:</label>
-              <span>{status.stats.totalConnections}</span>
-            </div>
-            
-            <div className="status-item">
-              <label>Última Conexión:</label>
-              <span>{formatDate(status.stats.lastConnection)}</span>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span className="text-xs">Última vez</span>
+              </div>
+              <div className="font-medium">
+                {formatDate(status.stats?.lastConnection)}
+              </div>
             </div>
           </div>
-          
+
           {!status.connected && status.serverRunning && (
-            <div className="status-help">
-              <p>💡 <strong>Sugerencias:</strong></p>
-              <ul>
-                <li>Verifica que la extensión esté instalada y habilitada</li>
-                <li>Recarga la página web donde quieres usar la extensión</li>
-                <li>Comprueba que no haya un firewall bloqueando el puerto {status.serverPort}</li>
+            <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 p-3 text-xs text-blue-700 dark:text-blue-300">
+              <p className="font-semibold mb-1">Sugerencias:</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Instala y habilita la extensión</li>
+                <li>Recarga la web objetivo</li>
+                <li>Verifica el puerto {status.serverPort}</li>
               </ul>
             </div>
           )}
-          
+
           {!status.serverRunning && (
-            <div className="status-help error">
-              <p>⚠️ <strong>Servidor HTTP no está funcionando</strong></p>
-              <p>La extensión no puede conectarse sin el servidor HTTP activo.</p>
+            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-xs text-red-700 dark:text-red-300">
+              <p className="font-semibold">El servidor local no funciona.</p>
+              <p>Reinicia la aplicación.</p>
             </div>
           )}
         </div>
-      )}
-    </div>
-  );
-};
+      </PopoverContent>
+    </Popover>
+  )
+}
 
-export default ConnectionStatus;
+export default ConnectionStatus

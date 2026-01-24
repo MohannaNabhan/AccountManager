@@ -1,182 +1,55 @@
-// Background script simplificado para debugging
-console.log('Account Manager Extension - Background script iniciado (versión simple)');
+// Background script minimalista
+const SERVER_URL = 'http://localhost:8765';
 
-// Configuración básica
-const CONFIG = {
-  ELECTRON_APP_URL: 'http://localhost:8765',
-  ENDPOINTS: {
-    STATUS: '/status',
-    FORM_DATA: '/form-data',
-    SAVE_FORM: '/save-form',
-    SHOW_APP: '/show-app'
-  },
-  TIMEOUTS: {
-    CONNECTION_CHECK: 5000,
-    API_REQUEST: 10000
-  },
-  SECURITY: {
-    MAX_RETRY_ATTEMPTS: 3,
-    RETRY_DELAY: 1000
-  }
-};
+let connectionStatus = { connected: false };
 
-// ID único para esta instancia de extensión
-const EXTENSION_CLIENT_ID = `chrome-ext-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-// Estado de conexión
-let connectionStatus = {
-  connected: false,
-  lastCheck: null,
-  error: null
-};
-
-// Función para hacer peticiones HTTP
-async function makeHttpRequest(endpoint, options = {}) {
-  const url = `${CONFIG.ELECTRON_APP_URL}${CONFIG.ENDPOINTS[endpoint.toUpperCase()] || endpoint}`;
-  
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-    'X-Client-ID': EXTENSION_CLIENT_ID,
-    'X-Extension-Version': '1.0.0'
-  };
-
-  const requestOptions = {
-    method: options.method || 'GET',
-    headers: { ...defaultHeaders, ...options.headers },
-    ...options
-  };
-
-  if (requestOptions.body && typeof requestOptions.body === 'object') {
-    requestOptions.body = JSON.stringify(requestOptions.body);
-  }
-
+async function checkStatus() {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUTS.API_REQUEST);
-    
-    const response = await fetch(url, {
-      ...requestOptions,
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    return { success: true, data };
-    
-  } catch (error) {
-    console.error('Error en petición HTTP:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-// Verificar estado de conexión
-async function checkConnectionStatus() {
-  try {
-    const result = await makeHttpRequest('status');
-    if (result.success) {
-      connectionStatus = {
-        connected: true,
-        lastCheck: Date.now(),
-        error: null,
-        appData: result.data
-      };
-      
-      // Actualizar badge
-      chrome.action.setBadgeText({ text: '✓' });
-      chrome.action.setBadgeBackgroundColor({ color: '#10b981' });
-      
-    } else {
-      throw new Error(result.error);
-    }
-  } catch (error) {
-    console.error('Error verificando conexión:', error);
-    connectionStatus = {
-      connected: false,
-      lastCheck: Date.now(),
-      error: error.message
-    };
-    
-    // Actualizar badge
+    const res = await fetch(`${SERVER_URL}/status`);
+    const connected = res.ok;
+    connectionStatus = { connected };
+    chrome.action.setBadgeText({ text: connected ? '✓' : '✗' });
+    chrome.action.setBadgeBackgroundColor({ color: connected ? '#10b981' : '#ef4444' });
+  } catch (e) {
+    connectionStatus = { connected: false };
     chrome.action.setBadgeText({ text: '✗' });
     chrome.action.setBadgeBackgroundColor({ color: '#ef4444' });
   }
 }
 
-// Event listeners
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Mensaje recibido:', message);
-  
-  if (message.type === 'GET_CONNECTION_STATUS') {
-    sendResponse({
-      success: true,
-      data: connectionStatus
-    });
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'GET_CONNECTION_STATUS') {
+    sendResponse({ success: true, data: connectionStatus });
+  } else if (msg.type === 'CHECK_CONNECTION') {
+    checkStatus().then(() => sendResponse({ success: true, data: connectionStatus }));
+    return true;
+  } else if (msg.type === 'GET_FORM_DATA') {
+    fetch(`${SERVER_URL}/form-data`, { 
+      method: 'POST', 
+      body: JSON.stringify({}),
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => res.json())
+      .then(data => sendResponse(data))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
+  } else if (msg.type === 'SAVE_PASSWORD_SETTINGS') {
+    fetch(`${SERVER_URL}/save-password-settings`, {
+      method: 'POST',
+      body: JSON.stringify(msg.data),
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => res.json())
+      .then(data => sendResponse(data))
+      .catch(err => sendResponse({ success: false, error: err.message }));
     return true;
   }
-  
-  if (message.type === 'CHECK_CONNECTION') {
-    checkConnectionStatus().then(() => {
-      sendResponse({
-        success: connectionStatus.connected,
-        data: connectionStatus
-      });
-    }).catch(error => {
-      sendResponse({
-        success: false,
-        error: error.message
-      });
-    });
-    return true;
-  }
-  
-  sendResponse({ success: false, error: 'Tipo de mensaje no reconocido' });
 });
 
-// Instalación
-chrome.runtime.onInstalled.addListener(async (details) => {
-  console.log('Extension instalada:', details);
-  
-  if (details.reason === 'install') {
-    try {
-      await chrome.storage.local.set({
-        'am_config': {
-          version: '1.0.0',
-          installDate: new Date().toISOString(),
-          autoDetect: true,
-          autoFill: false,
-          notifications: true,
-          debugMode: false
-        }
-      });
-      
-      chrome.tabs.create({
-        url: chrome.runtime.getURL('welcome.html')
-      });
-      
-    } catch (error) {
-      console.error('Error en configuración inicial:', error);
-    }
-  }
-  
-  // Verificar conexión inicial
-  setTimeout(checkConnectionStatus, 1000);
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
+  checkStatus();
 });
 
-// Startup
-chrome.runtime.onStartup.addListener(() => {
-  console.log('Extension iniciada');
-  setTimeout(checkConnectionStatus, 1000);
-});
-
-// Verificación periódica
-setInterval(checkConnectionStatus, 30000);
-
-// Verificación inicial
-setTimeout(checkConnectionStatus, 2000);
-
-console.log('Background script configurado correctamente');
+setInterval(checkStatus, 30000);
+checkStatus();

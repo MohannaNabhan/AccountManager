@@ -1,10 +1,32 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido a Account Manager Extension</title>
+    <title>Account Manager</title>
     <style>
+        :root {
+            --bg: #09090b;
+            --surface: #18181b;
+            --surface-hover: #27272a;
+            --border: #27272a;
+
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+
+            --success-bg: #052e16;
+            --success-border: #14532d;
+            --success-text: #4ade80;
+
+            --error-bg: #450a0a;
+            --error-border: #7f1d1d;
+            --error-text: #f87171;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,316 +34,255 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             padding: 20px;
         }
 
         .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
             width: 100%;
-            overflow: hidden;
+            max-width: 420px;
+            text-align: center;
         }
 
         .header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
+            margin-bottom: 32px;
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 24px;
             font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
         }
 
         .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
+            font-size: 14px;
+            color: var(--text-muted);
         }
 
-        .content {
-            padding: 40px;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin: 30px 0;
-        }
-
-        .feature {
-            text-align: center;
-            padding: 20px;
-            border-radius: 15px;
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
+        .status-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
             transition: all 0.3s ease;
-        }
-
-        .feature:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border-color: #4f46e5;
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 15px;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            border-radius: 50%;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
+            gap: 12px;
         }
 
-        .feature h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-            color: #1e293b;
+        .status-card.connected {
+            border-color: var(--success-border);
+            background: rgba(20, 83, 45, 0.1);
         }
 
-        .feature p {
-            color: #64748b;
-            font-size: 0.95rem;
+        .status-card.connected .status-icon {
+            color: var(--success-text);
         }
 
-        .setup-section {
-            background: #f1f5f9;
-            border-radius: 15px;
-            padding: 30px;
-            margin: 30px 0;
+        .status-card.connected h3 {
+            color: var(--success-text);
         }
 
-        .setup-section h2 {
-            color: #1e293b;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
+        .status-card.disconnected {
+            border-color: var(--error-border);
+            background: rgba(127, 29, 29, 0.1);
         }
 
-        .setup-steps {
-            list-style: none;
-            counter-reset: step-counter;
+        .status-card.disconnected .status-icon {
+            color: var(--error-text);
         }
 
-        .setup-steps li {
-            counter-increment: step-counter;
-            margin-bottom: 15px;
-            padding-left: 40px;
-            position: relative;
-            color: #475569;
-        }
-
-        .setup-steps li::before {
-            content: counter(step-counter);
-            position: absolute;
-            left: 0;
-            top: 0;
-            background: #4f46e5;
-            color: white;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .status-section {
-            background: #ecfdf5;
-            border: 2px solid #10b981;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 30px 0;
-            text-align: center;
-        }
-
-        .status-section.error {
-            background: #fef2f2;
-            border-color: #ef4444;
+        .status-card.disconnected h3 {
+            color: var(--error-text);
         }
 
         .status-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
+            font-size: 32px;
         }
 
-        .status-section.error .status-icon {
-            color: #ef4444;
+        .status-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
 
-        .status-section:not(.error) .status-icon {
-            color: #10b981;
+        .status-info p {
+            font-size: 13px;
+            color: var(--text-muted);
         }
 
-        .buttons {
+        .checklist {
+            text-align: left;
+            margin-bottom: 32px;
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .checklist-item {
             display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .checklist-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .checklist-item.active .step-dot {
+            background: var(--primary);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .btn {
-            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-block;
+            transition: all 0.2s ease;
+            width: 100%;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            background-color: var(--primary);
             color: white;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+            background-color: var(--primary-hover);
         }
 
         .btn-secondary {
-            background: #f1f5f9;
-            color: #475569;
-            border: 2px solid #e2e8f0;
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
         }
 
         .btn-secondary:hover {
-            background: #e2e8f0;
-            border-color: #cbd5e1;
+            background-color: var(--surface-hover);
+            border-color: var(--text-muted);
         }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #4f46e5;
+        .loading-spinner {
+            margin-right: 8px;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         .hidden {
             display: none;
         }
 
-        @media (max-width: 600px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .header p {
-                font-size: 1rem;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .feature-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 100%;
-                max-width: 300px;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Account Manager</h1>
-            <p>Extensión de Chrome para gestión segura de formularios</p>
+            <h1>Account Manager</h1>
+            <p>Extension Setup</p>
         </div>
 
-        <div class="content">
-            <div class="feature-grid">
-                <div class="feature">
-                    <div class="feature-icon">🔍</div>
-                    <h3>Detección Automática</h3>
-                    <p>Detecta automáticamente formularios de registro y login en las páginas web</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Seguridad Total</h3>
-                    <p>Todos los datos se almacenan de forma encriptada en tu aplicación local</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Llenado Rápido</h3>
-                    <p>Completa formularios con un solo clic usando tus datos guardados</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">🔄</div>
-                    <h3>Sincronización</h3>
-                    <p>Se conecta directamente con tu aplicación Account Manager</p>
-                </div>
-            </div>
-
-            <div class="setup-section">
-                <h2>🚀 Configuración Inicial</h2>
-                <ol class="setup-steps">
-                    <li>Asegúrate de que Account Manager esté ejecutándose en tu computadora</li>
-                    <li>La aplicación debe estar desbloqueada y funcionando en el puerto 8765</li>
-                    <li>Haz clic en "Verificar Conexión" para comprobar el estado</li>
-                    <li>Una vez conectado, puedes empezar a usar la extensión</li>
-                </ol>
-            </div>
-
-            <div id="status-section" class="status-section">
-                <div class="status-icon">⏳</div>
-                <h3 id="status-title">Verificando conexión...</h3>
-                <p id="status-message">Comprobando si Account Manager está disponible</p>
-            </div>
-
-            <div class="buttons">
-                <button id="check-connection" class="btn btn-primary">
-                    <span id="check-loading" class="loading hidden"></span>
-                    Verificar Conexión
-                </button>
-                <button id="open-app" class="btn btn-secondary">Abrir Account Manager</button>
-                <a href="#" id="close-tab" class="btn btn-secondary">Cerrar esta pestaña</a>
+        <div id="status-section" class="status-card disconnected">
+            <div class="status-icon" id="status-icon">⚠️</div>
+            <div class="status-info">
+                <h3 id="status-title">Disconnected</h3>
+                <p id="status-message">Checking connection...</p>
             </div>
         </div>
+
+        <div class="checklist">
+            <div class="checklist-item active">
+                <div class="step-dot"></div>
+                <span>Open the desktop application.</span>
+            </div>
+            <div class="checklist-item active">
+                <div class="step-dot"></div>
+                <span>Unlock your vault.</span>
+            </div>
+            <div class="checklist-item active">
+                <div class="step-dot"></div>
+                <span>The extension will auto-connect.</span>
+            </div>
+        </div>
+
+        <div class="test-zone">
+            <h3
+                style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
+                Testing Zone</h3>
+            <div
+                style="display: flex; flex-direction: column; gap: 12px; background: var(--surface); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+                <div style="text-align: left;">
+                    <label
+                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Username
+                        / Email</label>
+                    <input type="text" placeholder="Click icon to auto-fill"
+                        style="width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 10px; border-radius: 6px; color: white; font-size: 13px; outline: none;">
+                </div>
+                <div style="text-align: left;">
+                    <label
+                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Password</label>
+                    <input type="text" placeholder="Click icon to generate"
+                        style="width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 10px; border-radius: 6px; color: white; font-size: 13px; outline: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="actions" style="margin-top: 24px;">
+            <button id="check-connection" class="btn btn-primary">
+                <span id="check-loading" class="loading-spinner hidden"></span>
+                Verify Connection
+            </button>
+            <button id="open-app" class="btn btn-secondary">
+                Open Application
+            </button>
+        </div>
+
     </div>
 
+    <script src="content.js"></script>
     <script src="welcome.js"></script>
 </body>
+
 </html>

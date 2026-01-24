@@ -7,10 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { Plus, Trash2, Edit3 } from 'lucide-react'
-import { 
-  getAutoFormData, 
-  addAutoFormItem, 
-  updateAutoFormItem, 
+import { Separator } from '@/components/ui/separator'
+import {
+  getAutoFormData,
+  addAutoFormItem,
+  updateAutoFormItem,
   deleteAutoFormItem,
   PERSONAL_TEMPLATE,
   CREDIT_CARD_TEMPLATE,
@@ -71,7 +72,7 @@ export default function AutoForm() {
         await updateAutoFormItem(editingItem.section, editingItem.id, editingItem.data)
         toast.success('Elemento actualizado correctamente')
       }
-      
+
       // Recargar datos
       const data = await getAutoFormData()
       setAutoFormData(data)
@@ -110,66 +111,69 @@ export default function AutoForm() {
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Nombre del perfil</Label>
-          <Input 
-            value={editingItem.data?.name || ''} 
+          <Input
+            value={editingItem.data?.name || ''}
             onChange={(e) => updateEditingField('name', e.target.value)}
             placeholder="Ej: Personal, Trabajo, etc."
           />
         </div>
         <div className="grid gap-2">
           <Label>Nombre</Label>
-          <Input 
-            value={editingItem.data?.firstName || ''} 
+          <Input
+            value={editingItem.data?.firstName || ''}
             onChange={(e) => updateEditingField('firstName', e.target.value)}
             placeholder="Tu nombre"
           />
         </div>
         <div className="grid gap-2">
           <Label>Apellido</Label>
-          <Input 
-            value={editingItem.data?.lastName || ''} 
+          <Input
+            value={editingItem.data?.lastName || ''}
             onChange={(e) => updateEditingField('lastName', e.target.value)}
             placeholder="Tu apellido"
           />
         </div>
+        <div className="col-span-2 mt-2">
+          <Separator />
+          <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tight">Only Visual</p>
+        </div>
         <div className="grid gap-2">
           <Label>Fecha de nacimiento</Label>
-          <Input 
+          <Input
             type="date"
-            value={editingItem.data?.birthDate || ''} 
+            value={editingItem.data?.birthDate || ''}
             onChange={(e) => updateEditingField('birthDate', e.target.value)}
           />
         </div>
         <div className="grid gap-2">
           <Label>Teléfono</Label>
-          <Input 
-            value={editingItem.data?.phone || ''} 
-            onChange={(e) => updateEditingField('phone', e.target.value)}
-            placeholder="+1234567890"
-          />
+          <div className="flex gap-2">
+            <Input
+              className="w-20"
+              value={editingItem.data?.phonePrefix || ''}
+              onChange={(e) => updateEditingField('phonePrefix', e.target.value)}
+              placeholder="+34"
+            />
+            <Input
+              className="flex-1"
+              value={editingItem.data?.phoneNumber || ''}
+              onChange={(e) => updateEditingField('phoneNumber', e.target.value)}
+              placeholder="600000000"
+            />
+          </div>
+        </div>
+        <div className="col-span-2 mt-2">
+          <Separator />
+          <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tight">Only Visual</p>
         </div>
         <div className="grid gap-2">
           <Label>Email</Label>
-          <Input 
+          <Input
             type="email"
-            value={editingItem.data?.email || ''} 
+            value={editingItem.data?.email || ''}
             onChange={(e) => updateEditingField('email', e.target.value)}
             placeholder="tu@email.com"
           />
-        </div>
-        <div className="grid gap-2">
-          <Label>Género</Label>
-          <Select value={editingItem.data?.gender || ''} onValueChange={(value) => updateEditingField('gender', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="male">Masculino</SelectItem>
-              <SelectItem value="female">Femenino</SelectItem>
-              <SelectItem value="other">Otro</SelectItem>
-              <SelectItem value="prefer-not-to-say">Prefiero no decir</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
       <div className="flex gap-2 justify-end">
@@ -180,7 +184,7 @@ export default function AutoForm() {
           Guardar
         </Button>
       </div>
-    </div>
+    </div >
   )
 
   const renderCreditCardForm = () => (
@@ -188,24 +192,24 @@ export default function AutoForm() {
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Nombre del perfil</Label>
-          <Input 
-            value={editingItem.data?.name || ''} 
+          <Input
+            value={editingItem.data?.name || ''}
             onChange={(e) => updateEditingField('name', e.target.value)}
             placeholder="Ej: Personal, Trabajo, etc."
           />
         </div>
         <div className="grid gap-2">
           <Label>Nombre del titular</Label>
-          <Input 
-            value={editingItem.data?.holderName || ''} 
+          <Input
+            value={editingItem.data?.holderName || ''}
             onChange={(e) => updateEditingField('holderName', e.target.value)}
             placeholder="Nombre como aparece en la tarjeta"
           />
         </div>
         <div className="grid gap-2 col-span-2">
           <Label>Número de tarjeta</Label>
-          <Input 
-            value={editingItem.data?.number || ''} 
+          <Input
+            value={editingItem.data?.number || ''}
             onChange={(e) => updateEditingField('number', e.target.value)}
             placeholder="1234 5678 9012 3456"
             maxLength={19}
@@ -213,12 +217,16 @@ export default function AutoForm() {
         </div>
         <div className="grid gap-2">
           <Label>CVV</Label>
-          <Input 
-            value={editingItem.data?.cvv || ''} 
+          <Input
+            value={editingItem.data?.cvv || ''}
             onChange={(e) => updateEditingField('cvv', e.target.value)}
             placeholder="123"
             maxLength={4}
           />
+        </div>
+        <div className="col-span-2 mt-2">
+          <Separator />
+          <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tight">Only Visual</p>
         </div>
         <div className="grid gap-2">
           <Label>Mes de expiración</Label>
@@ -270,56 +278,56 @@ export default function AutoForm() {
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Nombre del perfil</Label>
-          <Input 
-            value={editingItem.data?.name || ''} 
+          <Input
+            value={editingItem.data?.name || ''}
             onChange={(e) => updateEditingField('name', e.target.value)}
             placeholder="Ej: Casa, Trabajo, etc."
           />
         </div>
         <div className="grid gap-2">
           <Label>Calle</Label>
-          <Input 
-            value={editingItem.data?.street || ''} 
+          <Input
+            value={editingItem.data?.street || ''}
             onChange={(e) => updateEditingField('street', e.target.value)}
             placeholder="Nombre de la calle"
           />
         </div>
         <div className="grid gap-2">
           <Label>Número</Label>
-          <Input 
-            value={editingItem.data?.streetNumber || ''} 
+          <Input
+            value={editingItem.data?.streetNumber || ''}
             onChange={(e) => updateEditingField('streetNumber', e.target.value)}
             placeholder="123"
           />
         </div>
         <div className="grid gap-2">
           <Label>Ciudad</Label>
-          <Input 
-            value={editingItem.data?.city || ''} 
+          <Input
+            value={editingItem.data?.city || ''}
             onChange={(e) => updateEditingField('city', e.target.value)}
             placeholder="Tu ciudad"
           />
         </div>
         <div className="grid gap-2">
           <Label>Estado/Provincia</Label>
-          <Input 
-            value={editingItem.data?.state || ''} 
+          <Input
+            value={editingItem.data?.state || ''}
             onChange={(e) => updateEditingField('state', e.target.value)}
             placeholder="Tu estado o provincia"
           />
         </div>
         <div className="grid gap-2">
           <Label>Código postal</Label>
-          <Input 
-            value={editingItem.data?.zipCode || ''} 
+          <Input
+            value={editingItem.data?.zipCode || ''}
             onChange={(e) => updateEditingField('zipCode', e.target.value)}
             placeholder="12345"
           />
         </div>
         <div className="grid gap-2">
           <Label>País</Label>
-          <Input 
-            value={editingItem.data?.country || ''} 
+          <Input
+            value={editingItem.data?.country || ''}
             onChange={(e) => updateEditingField('country', e.target.value)}
             placeholder="Tu país"
           />
@@ -344,17 +352,17 @@ export default function AutoForm() {
       <div className="grid gap-4">
         <div className="grid gap-2">
           <Label>Nombre del perfil</Label>
-          <Input 
-            value={editingItem.data?.name || ''} 
+          <Input
+            value={editingItem.data?.name || ''}
             onChange={(e) => updateEditingField('name', e.target.value)}
             placeholder="Ej: Personal, Trabajo, etc."
           />
         </div>
         <div className="grid gap-2">
           <Label>Correo electrónico</Label>
-          <Input 
+          <Input
             type="email"
-            value={editingItem.data?.email || ''} 
+            value={editingItem.data?.email || ''}
             onChange={(e) => updateEditingField('email', e.target.value)}
             placeholder="usuario@ejemplo.com"
           />
@@ -374,7 +382,7 @@ export default function AutoForm() {
   const renderItemsList = (section, items, sectionName) => {
     // Asegurar que items sea siempre un array
     const itemsArray = Array.isArray(items) ? items : []
-    
+
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -384,7 +392,7 @@ export default function AutoForm() {
             Agregar {sectionName.toLowerCase()}
           </Button>
         </div>
-        
+
         {itemsArray.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No hay {sectionName.toLowerCase()} guardados
@@ -392,41 +400,41 @@ export default function AutoForm() {
         ) : (
           <div className="grid gap-3">
             {itemsArray.map((item) => (
-            <Card key={item.id} className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">{item.name || 'Sin nombre'}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {section === 'personal' && `${item.firstName} ${item.lastName}`}
-                    {section === 'creditCard' && `**** **** **** ${item.number?.slice(-4) || ''}`}
-                    {section === 'address' && `${item.street} ${item.streetNumber}, ${item.city}`}
-                    {section === 'email' && item.email}
-                  </p>
+              <Card key={item.id} className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">{item.name || 'Sin nombre'}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {section === 'personal' && `${item.firstName} ${item.lastName}`}
+                      {section === 'creditCard' && `**** **** **** ${item.number?.slice(-4) || ''}`}
+                      {section === 'address' && `${item.street} ${item.streetNumber}, ${item.city}`}
+                      {section === 'email' && item.email}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editItem(section, item)}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteItem(section, item.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => editItem(section, item)}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => deleteItem(section, item.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -449,7 +457,7 @@ export default function AutoForm() {
             <TabsTrigger value="address">Direcciones</TabsTrigger>
             <TabsTrigger value="email">Correos</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="personal" className="mt-6">
             {editingItem.section === 'personal' ? (
               renderPersonalForm()
