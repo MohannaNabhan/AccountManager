@@ -1073,12 +1073,7 @@
       content.appendChild(backBtn);
 
       if (response && response.success && response.data) {
-        const emails = response.data.emails || [];
-        if (emails.length === 0) {
-          content.innerHTML += '<div style="color: #71717a; font-size: 12px; padding: 20px; text-align: center;">No emails configured.</div>';
-          return;
-        }
-
+        const emails = response.data.emails || []; 
         emails.forEach(item => {
           const btn = document.createElement('button');
           btn.style.cssText = `
@@ -1130,8 +1125,18 @@
           renderEmailList();
         });
 
+        // Add Go Back button for error state too
+        const backBtnError = createActionBtn('⬅️', 'Go Back', true);
+        backBtnError.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          renderMainMenu();
+        });
+
         errorContainer.appendChild(errorMsg);
         errorContainer.appendChild(retryBtn);
+        errorContainer.appendChild(backBtnError);
+        content.innerHTML = ''; // Clear previous content (loading/back button) to avoid duplication or mess
         content.appendChild(errorContainer);
       }
     });
