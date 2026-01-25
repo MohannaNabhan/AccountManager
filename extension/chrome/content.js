@@ -550,7 +550,7 @@
     
     chrome.runtime.sendMessage({ type: 'GET_FORM_DATA' }, (response) => {
       content.innerHTML = '';
-      const backBtn = createActionBtn('⬅️', `Back up`, true);
+      const backBtn = createActionBtn('⬅️', `Go Back`, true);
       backBtn.style.marginBottom = '6px';
       backBtn.addEventListener('click', (e) => {
         e.preventDefault();

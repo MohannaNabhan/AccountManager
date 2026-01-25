@@ -1,10 +1,10 @@
 {
   "name": "accountmanager",
-  "version": "2.1.0",
-  "description": "An Electron application with React",
+  "version": "2.1.1",
+  "description": "Account manager",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "Mohanna Nabhan",
+  "homepage": "https://github.com/MohannaNabhan/AccountManager",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
