@@ -1,6 +1,6 @@
 {
   "name": "accountmanager",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Account manager",
   "main": "./out/main/index.js",
   "author": "Mohanna Nabhan",
