@@ -153,7 +153,7 @@
       border: 1px solid #27272a !important;
       border-radius: 12px !important;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
-      z-index: 2147483647 !important;
+      z-index: 9999999999999999999999999 !important;
       display: flex !important;
       flex-direction: column !important;
       user-select: none !important;
@@ -1169,7 +1169,7 @@
     const icon = document.createElement('div');
     icon.className = 'am-input-icon';
     icon.innerHTML = ICON_SVG;
-    icon.style.cssText = `position: absolute !important; cursor: pointer !important; z-index: 2147483645 !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 24px !important; height: 24px !important; transition: all 0.2s !important; opacity: 0.5 !important; background: transparent !important;`;
+    icon.style.cssText = `position: absolute !important; cursor: pointer !important; z-index: 99999999999999999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 24px !important; height: 24px !important; transition: all 0.2s !important; opacity: 0.5 !important; background: transparent !important;`;
 
     function updatePosition() {
       if (!input || !document.body.contains(input)) { icon.remove(); return; }
