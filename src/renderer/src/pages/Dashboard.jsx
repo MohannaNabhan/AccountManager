@@ -29,7 +29,7 @@ export default function Dashboard() {
     notes
       .filter((n) => n.reminderAt && n.reminderAt <= now)
       .forEach((n) => {
-        toast.info(`Recordatorio: ${n.title}`)
+        toast.info(`Reminder: ${n.title}`)
       })
   }, [notes])
 
@@ -44,26 +44,26 @@ export default function Dashboard() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Card className="p-4">
-        <div className="text-sm text-muted-foreground">Total de cuentas</div>
+        <div className="text-sm text-muted-foreground">Total accounts</div>
         <div className="text-3xl font-semibold">{accounts.length}</div>
       </Card>
       <Card className="p-4">
-        <div className="text-sm text-muted-foreground">Total de notas</div>
+        <div className="text-sm text-muted-foreground">Total notes</div>
         <div className="text-3xl font-semibold">{notes.length}</div>
       </Card>
       <Card className="p-4">
-        <div className="text-sm text-muted-foreground">Última actividad</div>
+        <div className="text-sm text-muted-foreground">Last activity</div>
         <div className="text-xs">{new Date().toLocaleString()}</div>
       </Card>
 
       <div className="lg:col-span-2">
         <Card className="p-4">
-          <div className="mb-2 font-medium">Distribución de estado de cuentas</div>
+          <div className="mb-2 font-medium">Account status distribution</div>
           <ChartContainer
             config={{
-              activo: { label: 'Activas', color: '#4ade80' },
-              inactivo: { label: 'Inactivas', color: '#f87171' },
-              pendiente: { label: 'Pendientes', color: '#60a5fa' }
+              activo: { label: 'Active', color: '#4ade80' },
+              inactivo: { label: 'Inactive', color: '#f87171' },
+              pendiente: { label: 'Pending', color: '#60a5fa' }
             }}
           >
             <Recharts.PieChart>
@@ -80,10 +80,10 @@ export default function Dashboard() {
       </div>
 
       <Card className="p-4">
-        <div className="mb-2 font-medium">Acciones rápidas</div>
+        <div className="mb-2 font-medium">Quick actions</div>
         <div className="flex gap-2">
-          <Button asChild><a href="#/accounts">Crear cuenta</a></Button>
-          <Button variant="outline" asChild><a href="#/notes">Nueva nota</a></Button>
+          <Button asChild><a href="#/accounts">Create account</a></Button>
+          <Button variant="outline" asChild><a href="#/notes">New note</a></Button>
         </div>
       </Card>
     </div>

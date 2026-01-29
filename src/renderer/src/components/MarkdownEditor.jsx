@@ -26,7 +26,7 @@ export default function MarkdownEditor({ value, onChange, title, onTitleChange }
   return (
     <div className="flex flex-col gap-3">
       <Input
-        placeholder="Título de la nota"
+        placeholder="Note title"
         value={localTitle}
         onChange={(e) => {
           setLocalTitle(e.target.value)
@@ -34,15 +34,15 @@ export default function MarkdownEditor({ value, onChange, title, onTitleChange }
         }}
       />
       <div className="flex gap-2">
-        <Button type="button" variant="outline" onClick={() => insert('**texto en negritas**')}>B</Button>
-        <Button type="button" variant="outline" onClick={() => insert('* elemento de lista')}>• Lista</Button>
-        <Button type="button" variant="outline" onClick={() => insert('# Encabezado')}>H1</Button>
-        <Button type="button" variant="outline" onClick={() => insert('> cita')}>Cita</Button>
-        <Button type="button" variant="outline" onClick={() => insert('`código`')}>Code</Button>
+        <Button type="button" variant="outline" onClick={() => insert('**bold text**')}>B</Button>
+        <Button type="button" variant="outline" onClick={() => insert('* list item')}>• List</Button>
+        <Button type="button" variant="outline" onClick={() => insert('# Header')}>H1</Button>
+        <Button type="button" variant="outline" onClick={() => insert('> quote')}>Quote</Button>
+        <Button type="button" variant="outline" onClick={() => insert('`code`')}>Code</Button>
       </div>
       <Textarea
         className="min-h-40"
-        placeholder="Contenido en Markdown..."
+        placeholder="Markdown content..."
         value={local}
         onChange={(e) => {
           setLocal(e.target.value)

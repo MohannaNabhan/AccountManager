@@ -34,7 +34,7 @@ import { toast } from 'sonner'
 const schema = z
   .object({
     id: z.string().optional(),
-    name: z.string().min(2, 'Service requerido'),
+    name: z.string().min(2, 'Service required'),
     email: z.string().optional(),
     username: z.string().optional(),
     note: z.string().optional()
@@ -42,7 +42,7 @@ const schema = z
   .superRefine((data, ctx) => {
     const hasAny = !!(data.email && data.email.trim()) || !!(data.username && data.username.trim()) || !!(data.note && data.note.trim())
     if (!hasAny) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Debes incluir al menos Email, Usuario o Nota' })
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'You must include at least Email, Username or Note' })
     }
   })
 
@@ -76,20 +76,20 @@ export default function Accounts() {
 
   const filtered = useMemo(() => {
     console.log('🔍 Filtering accounts:', accounts.length, 'search term:', `"${search}"`)
-    
+
     if (!search || search.trim().length === 0) {
       console.log('✅ No search term, showing all accounts:', accounts.length)
       return accounts
     }
-    
+
     const searchTerm = search.trim().toLowerCase()
     console.log('🔎 Searching for:', `"${searchTerm}"`)
-    
+
     const result = accounts.filter((account, index) => {
       // Crear un texto combinado de todos los campos buscables
       const searchableText = [
         account.name,
-        account.email, 
+        account.email,
         account.username,
         account.password,
         account.note,
@@ -100,16 +100,16 @@ export default function Accounts() {
         .filter(Boolean) // Remover valores null/undefined
         .join(' ')
         .toLowerCase()
-      
+
       const isMatch = searchableText.includes(searchTerm)
-      
+
       if (isMatch) {
         console.log(`✅ Match #${index + 1}:`, account.name || account.email || 'Unnamed', '- matched text contains:', `"${searchTerm}"`)
       }
-      
+
       return isMatch
     })
-    
+
     console.log(`🎯 Search results: ${result.length} matches from ${accounts.length} total accounts`)
     return result
   }, [accounts, search])
@@ -121,14 +121,14 @@ export default function Accounts() {
         <Checkbox
           checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Seleccionar todo"
+          aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Seleccionar fila"
+          aria-label="Select row"
         />
       ),
       enableSorting: false,
@@ -142,7 +142,7 @@ export default function Accounts() {
           <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
             Email <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.email ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('email')}>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.email ? 'Hide' : 'Show'} onClick={() => toggleForce('email')}>
             {!forceShowCols.email ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -162,8 +162,8 @@ export default function Accounts() {
       accessorKey: 'username',
       header: () => (
         <div className="flex items-center gap-1">
-          <span>Usuario</span>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.username ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('username')}>
+          <span>Username</span>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.username ? 'Hide' : 'Show'} onClick={() => toggleForce('username')}>
             {!forceShowCols.username ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -171,13 +171,13 @@ export default function Accounts() {
       cell: ({ row }) => (
         <SensitiveCell
           value={row.getValue('username') || ''}
-          label="Usuario"
+          label="Username"
           showOverride={(forceShowCols.username || ((search || '').trim().length > 0)) ? true : undefined}
           query={(search || '').trim()}
         />
       )
     },
-    { accessorKey: 'note', header: 'Nota', cell: ({ row }) => <ViewNoteButton note={row.getValue('note') || ''} /> },
+    { accessorKey: 'note', header: 'Note', cell: ({ row }) => <ViewNoteButton note={row.getValue('note') || ''} /> },
     {
       id: 'actions',
       enableHiding: false,
@@ -187,26 +187,26 @@ export default function Accounts() {
           <div className="flex gap-2">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline">Detalles</Button>
+                <Button variant="outline">Details</Button>
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
-                  <SheetTitle>Detalles de cuenta</SheetTitle>
+                  <SheetTitle>Account Details</SheetTitle>
                   <SheetDescription>{a.email || 'none'}</SheetDescription>
                 </SheetHeader>
                 <div className="mt-4 space-y-2">
                   <div><span className="text-muted-foreground">Service:</span> {a.name || 'none'}</div>
-                  <div><span className="text-muted-foreground">Creado:</span> {new Date(a.createdAt).toLocaleString()}</div>
+                  <div><span className="text-muted-foreground">Created:</span> {new Date(a.createdAt).toLocaleString()}</div>
                   <Separator className="my-2" />
                   <div>
-                    <span className="text-muted-foreground">Nota:</span>
+                    <span className="text-muted-foreground">Note:</span>
                     <div className="mt-1 whitespace-pre-wrap break-words text-sm">{a.note || 'none'}</div>
                   </div>
                 </div>
               </SheetContent>
             </Sheet>
             <EditAccountDialog account={a} mode="simple" />
-            <Button variant="destructive" onClick={async () => { await deleteAccount(a.id); toast.success('Cuenta movida a la papelera') }}>Eliminar</Button>
+            <Button variant="destructive" onClick={async () => { await deleteAccount(a.id); toast.success('Account moved to trash') }}>Delete</Button>
           </div>
         )
       }
@@ -236,7 +236,7 @@ export default function Accounts() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2 items-center">
         <Input
-          placeholder="Buscar en todos los campos"
+          placeholder="Search in all fields"
           value={search}
           onChange={(e) => {
             const val = e.target.value
@@ -248,7 +248,7 @@ export default function Accounts() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Columnas <ChevronDown className="ml-2 h-4 w-4" />
+              Columns <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -267,7 +267,7 @@ export default function Accounts() {
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <CreateAccountButton onCreated={() => toast.success('Cuenta creada')} />
+        <CreateAccountButton onCreated={() => toast.success('Account created')} />
       </div>
       <ContentScroll mainClass="mt-2" className="p-1">
         <Table>
@@ -296,7 +296,7 @@ export default function Accounts() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Sin resultados.
+                  No results.
                 </TableCell>
               </TableRow>
             )}
@@ -331,11 +331,11 @@ function SensitiveCell({ value = '', label, initialShow = false, showOverride, q
     try {
       await navigator.clipboard.writeText(value)
       setCopied(true)
-      toast.success(`${label} copiado`)
+      toast.success(`${label} copied`)
       setTimeout(() => setCopied(false), 1200)
     } catch (err) {
       console.error('Clipboard error:', err)
-      toast.error(`No se pudo copiar ${label.toLowerCase()}`)
+      toast.error(`Failed to copy ${label.toLowerCase()}`)
     }
   }
   const q = (query || '').trim()
@@ -367,7 +367,7 @@ function SensitiveCell({ value = '', label, initialShow = false, showOverride, q
             type="button"
             variant="ghost"
             className="h-8 w-8 p-0"
-            title={effectiveShow ? 'Ocultar' : 'Ver'}
+            title={effectiveShow ? 'Hide' : 'Show'}
             onClick={() => setShow((v) => !v)}
             disabled={showOverride === true}
           >
@@ -377,7 +377,7 @@ function SensitiveCell({ value = '', label, initialShow = false, showOverride, q
             type="button"
             variant="outline"
             className="h-8 w-8 p-0"
-            title={`Copiar ${label}`}
+            title={`Copy ${label}`}
             onClick={onCopy}
           >
             {copied ? <CheckIcon className="size-4 text-green-600" /> : <CopyIcon className="size-4" />}
@@ -396,13 +396,13 @@ function ViewNoteButton({ note = '' }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" className="h-8 w-8 p-0" title="Ver nota">
+        <Button type="button" variant="ghost" className="h-8 w-8 p-0" title="View note">
           <EyeIcon className="size-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nota</DialogTitle>
+          <DialogTitle>Note</DialogTitle>
         </DialogHeader>
         <div className="mt-2 whitespace-pre-wrap break-words text-sm">{note}</div>
       </DialogContent>
@@ -423,23 +423,23 @@ function CreateAccountButton({ onCreated }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Crear cuenta</Button>
+        <Button>Create account</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nueva cuenta</DialogTitle>
+          <DialogTitle>New account</DialogTitle>
         </DialogHeader>
         <form className="space-y-3" onSubmit={form.handleSubmit(submit)}>
           <Label>Service</Label>
           <Input placeholder="Service" {...form.register('name')} />
-          <Label>Usuario</Label>
-          <Input placeholder="Usuario (opcional)" {...form.register('username')} />
+          <Label>Username</Label>
+          <Input placeholder="Username (optional)" {...form.register('username')} />
           <Label>Email</Label>
-          <Input placeholder="Email (opcional)" type="email" {...form.register('email')} /> 
-          <Label>Nota para recordar contraseña</Label>
-          <Textarea placeholder="Pista o nota (opcional)" {...form.register('note')} />
+          <Input placeholder="Email (optional)" type="email" {...form.register('email')} />
+          <Label>Note to remember password</Label>
+          <Textarea placeholder="Hint or note (optional)" {...form.register('note')} />
           <DialogFooter>
-            <Button type="submit">Guardar</Button>
+            <Button type="submit">Save</Button>
           </DialogFooter>
         </form>
       </DialogContent>

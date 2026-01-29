@@ -126,12 +126,12 @@ export default function SidebarLayout({ children }) {
   const [totalAccounts, setTotalAccounts] = useState(0)
   const [notesCount, setNotesCount] = useState(0)
 
-  // Estados para búsqueda global
+  // Global search state
   const [globalSearch, setGlobalSearch] = useState('')
   const [allAccounts, setAllAccounts] = useState([])
   const [showSearch, setShowSearch] = useState(false)
 
-  // Estados para configuración de contraseñas
+  // Password settings state
   const [pwSettings, setPwSettings] = useState({
     length: 15,
     includeNumbers: true,
@@ -139,9 +139,29 @@ export default function SidebarLayout({ children }) {
     includeSymbols: true
   })
 
+  // Update logic
+  const [updateStatus, setUpdateStatus] = useState(null)
+
+  useEffect(() => {
+    const unsub = window.api.app.onUpdateStatus((payload) => {
+      console.log('Update status:', payload)
+      setUpdateStatus(payload)
+      if (payload.status === 'downloaded') {
+        toast.info('Update ready to install', {
+          action: {
+            label: 'Install',
+            onClick: () => window.api.app.installUpdate()
+          },
+          duration: Infinity
+        })
+      }
+    })
+    return () => unsub()
+  }, [])
+
   useEffect(() => {
     // close any mobile overlays etc. if needed
-    // Limpiar búsqueda global cuando se navega a una nueva página
+    // Clear global search when navigating to a new page
     setGlobalSearch('')
   }, [location.pathname])
 
@@ -152,19 +172,19 @@ export default function SidebarLayout({ children }) {
         const notes = await getNotes()
         setNotesCount(notes.length)
       } catch { }
-      // Cargar todas las cuentas para búsqueda global
+      // Load all accounts for global search
       try {
         const accounts = await getAccounts()
         setAllAccounts(Array.isArray(accounts) ? accounts : [])
       } catch { }
-      // Cargar configuración de contraseñas
+      // Load password settings
       setPwSettings(await getPasswordSettings())
     })()
     const unsub = onStorageUpdate(async ({ key }) => {
       if (key === KEYS.PROJECTS_KEY) setProjects(await getProjects())
       if (key === KEYS.ACCOUNTS_KEY) {
         refreshCounts()
-        // Actualizar cuentas para búsqueda global
+        // Update accounts for global search
         try {
           const accounts = await getAccounts()
           setAllAccounts(Array.isArray(accounts) ? accounts : [])
@@ -183,7 +203,7 @@ export default function SidebarLayout({ children }) {
           setProfiles(res?.profiles || [])
           setCurrentProfile(res?.currentProfile || '')
         } catch (err) {
-          console.error('No se pudo refrescar perfiles', err)
+          console.error('Failed to refresh profiles', err)
         }
       }
     })
@@ -234,7 +254,7 @@ export default function SidebarLayout({ children }) {
       }
       setCounts(map)
     } catch (e) {
-      console.error('Error calculando conteos:', e)
+      console.error('Error calculating counts:', e)
     }
   }
 
@@ -247,7 +267,7 @@ export default function SidebarLayout({ children }) {
         setProfiles(list)
         setCurrentProfile(st?.currentProfile || profRes?.currentProfile || list[0]?.id || '')
       } catch (err) {
-        console.error('No se pudo cargar perfiles', err)
+        console.error('Failed to load profiles', err)
       }
     })()
   }, [])
@@ -259,7 +279,7 @@ export default function SidebarLayout({ children }) {
       await window.api.vault.lock()
       await window.api.app.reload()
     } catch (err) {
-      console.error('Cambiar de cuenta falló', err)
+      console.error('Failed to switch account', err)
     }
   }
 
@@ -271,7 +291,7 @@ export default function SidebarLayout({ children }) {
     )
   }
 
-  // Búsqueda filtrada
+  // Filtered search
   const filteredAccounts = useMemo(() => {
     if (!globalSearch.trim()) return []
 
@@ -293,7 +313,7 @@ export default function SidebarLayout({ children }) {
     })
   }, [allAccounts, globalSearch])
 
-  // Mostrar búsqueda cuando hay texto
+  // Show search when there is text
   useEffect(() => {
     setShowSearch(globalSearch.trim().length > 0)
   }, [globalSearch])
@@ -309,10 +329,10 @@ export default function SidebarLayout({ children }) {
             <SidebarHeader>
               {/* <div className="px-3 pt-3 text-lg font-semibold">AccountManager</div>
             <div className="px-3 pb-3">
-              <div className="text-xs text-muted-foreground mb-1">Cuenta</div>
+               <div className="text-xs text-muted-foreground mb-1">Account</div>
               <Select value={currentProfile} onValueChange={handleSelectProfile}>
                 <SelectTrigger className="h-9 w-full">
-                  <SelectValue placeholder="Selecciona cuenta" />
+                  <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
                   {profiles.map((p) => (
@@ -334,11 +354,11 @@ export default function SidebarLayout({ children }) {
                       await window.api.vault.lock()
                       await window.api.app.reload()
                     } catch (err) {
-                      console.error('Cerrar sesión falló', err)
+                      console.error('Failed to logout', err)
                     }
                   }}
                 >
-                  Cerrar sesión
+                  Log out
                 </Button>
               </div>
             </SidebarHeader>
@@ -377,7 +397,7 @@ export default function SidebarLayout({ children }) {
                       >
                         <Link to="/projects" className="flex items-center gap-2">
                           <FolderIcon className="size-4" />
-                          Proyectos
+                          Projects
                         </Link>
                       </SidebarMenuButton>
                       <SidebarMenuBadge>{projects.length}</SidebarMenuBadge>
@@ -422,14 +442,14 @@ export default function SidebarLayout({ children }) {
                               {
                                 to: `/projects/${p.id}`,
                                 icon: UsersIcon,
-                                label: 'Cuentas',
+                                label: 'Accounts',
                                 count: counts[p.id]?.active ?? 0,
                                 active: location.pathname === `/projects/${p.id}`
                               },
                               {
                                 to: `/projects/${p.id}/trash`,
                                 icon: Trash2Icon,
-                                label: 'Papelera',
+                                label: 'Trash',
                                 count: counts[p.id]?.trash ?? 0,
                                 active: location.pathname === `/projects/${p.id}/trash`
                               }
@@ -443,7 +463,7 @@ export default function SidebarLayout({ children }) {
                                   <Link to={item.to} className="flex  items-center gap-2">
                                     <item.icon className="size-4 text-secondary-foreground" />
                                     <span>{item.label}</span>
-                                    {item.label != 'Cuentas' && (
+                                    {item.label != 'Accounts' && (
                                       <span className="ml-auto rounded bg-muted px-1 text-xs min-w-5 text-center">
                                         {item.count}
                                       </span>
@@ -461,6 +481,36 @@ export default function SidebarLayout({ children }) {
               </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
+              {updateStatus?.status === 'available' && (
+                <div className="px-3 pb-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-7 text-xs border-blue-500 text-blue-500 hover:text-blue-600"
+                    onClick={() => window.api.app.startDownloadUpdate()}
+                  >
+                    <LucideIcons.DownloadIcon className="size-3 mr-2" />
+                    New version available
+                  </Button>
+                </div>
+              )}
+              {updateStatus?.status === 'downloading' && (
+                <div className="px-3 pb-2 text-xs text-yellow-500">
+                  Downloading update: {Math.round(updateStatus.progress?.percent || 0)}%
+                </div>
+              )}
+              {updateStatus?.status === 'downloaded' && (
+                <div className="px-3 pb-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => window.api.app.installUpdate()}
+                  >
+                    Update and Restart
+                  </Button>
+                </div>
+              )}
 
               <div className="text-xs text-muted-foreground px-3 pb-3">
                 {appVersion ? `v${appVersion}` : 'v...'}
@@ -473,14 +523,14 @@ export default function SidebarLayout({ children }) {
               <SidebarTrigger />
               <Separator orientation="vertical" />
               <div className="font-medium">
-                {showSearch ? 'Resultados de búsqueda' : titleForPath(location.pathname)}
+                {showSearch ? 'Search Results' : titleForPath(location.pathname)}
               </div>
               <div className="ml-auto flex items-center gap-2">
                 <ConnectionStatus />
                 <div className="relative">
                   <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar en todos los proyectos y cuentas..."
+                    placeholder="Search in all projects and accounts..."
                     value={globalSearch}
                     onChange={(e) => setGlobalSearch(e.target.value)}
                     className="pl-8 w-96"
@@ -511,18 +561,18 @@ export default function SidebarLayout({ children }) {
 }
 
 function titleForPath(path) {
-  if (path.startsWith('/dashboard')) return 'Panel'
-  if (path.startsWith('/accounts')) return 'Cuentas'
-  if (path.startsWith('/notes')) return 'Notas'
-  if (path.startsWith('/projects/') && path.endsWith('/trash')) return 'Papelera del proyecto'
-  if (path.startsWith('/projects/')) return 'Cuentas del proyecto'
-  if (path.startsWith('/projects')) return 'Proyectos'
-  return 'Proyectos'
+  if (path.startsWith('/dashboard')) return 'Dashboard'
+  if (path.startsWith('/accounts')) return 'Accounts'
+  if (path.startsWith('/notes')) return 'Notes'
+  if (path.startsWith('/projects/') && path.endsWith('/trash')) return 'Project Trash'
+  if (path.startsWith('/projects/')) return 'Project Accounts'
+  if (path.startsWith('/projects')) return 'Projects'
+  return 'Projects'
 }
 
 
 
-// Componente para mostrar resultados de búsqueda
+// Component to show search results
 function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettings }) {
   const [sorting, setSorting] = useState([])
   const [columnFilters, setColumnFilters] = useState([])
@@ -533,26 +583,26 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
 
   const getProjectName = (projectId) => {
     const project = projects.find((p) => p.id === projectId)
-    return project ? project.name : 'Proyecto desconocido'
+    return project ? project.name : 'Unknown Project'
   }
 
-  // Detectar cuentas con proyectos desconocidos
+  // Detect accounts with unknown projects
   const orphanedAccounts = accounts.filter((account) => {
     const project = projects.find((p) => p.id === account.projectId)
     return !project
   })
 
-  // Mostrar advertencia si hay cuentas huérfanas
+  // Show warning if there are orphaned accounts
   const showOrphanWarning = orphanedAccounts.length > 0
 
-  // Función para crear proyecto por defecto y reasignar cuentas huérfanas
+  // Function to create default project and reassign orphaned accounts
   const handleFixOrphanedAccounts = async () => {
     try {
-      // Crear proyecto por defecto
+      // Create default project
       const defaultProject = {
         id: crypto.randomUUID(),
-        name: 'Cuentas sin proyecto',
-        description: 'Proyecto creado automáticamente para cuentas huérfanas',
+        name: 'Accounts without project',
+        description: 'Automatically created for orphaned accounts',
         icon: 'FolderIcon',
         createdAt: Date.now()
       }
@@ -591,7 +641,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
     )
   }
 
-  // Componente SensitiveCell con resaltado de búsqueda
+  // SensitiveCell component with search highlight
   function SensitiveCellWithHighlight({ value = '', label, initialShow = false, searchTerm, showOverride }) {
     const [show, setShow] = useState(initialShow)
     const [copied, setCopied] = useState(false)
@@ -604,11 +654,11 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       try {
         await navigator.clipboard.writeText(value)
         setCopied(true)
-        toast.success(`${label} copiado`)
+        toast.success(`${label} copied`)
         setTimeout(() => setCopied(false), 2000)
       } catch (err) {
-        console.error('Error al copiar:', err)
-        toast.error(`No se pudo copiar ${label.toLowerCase()}`)
+        console.error('Copy failed:', err)
+        toast.error(`Failed to copy ${label.toLowerCase()}`)
       }
     }
 
@@ -629,7 +679,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
               className="h-6 w-6 p-0"
               onClick={() => setShow(!show)}
               disabled={showOverride === true}
-              title={effectiveShow ? 'Ocultar' : 'Ver'}
+              title={effectiveShow ? 'Hide' : 'Show'}
             >
               {!effectiveShow ? <EyeOffIcon className="h-3 w-3" /> : <EyeIcon className="h-3 w-3" />}
             </Button>
@@ -638,7 +688,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
               size="sm"
               className="h-6 w-6 p-0"
               onClick={handleCopy}
-              title={`Copiar ${label}`}
+              title={`Copy ${label}`}
             >
               {copied ? <CheckIcon className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
             </Button>
@@ -648,20 +698,20 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
     )
   }
 
-  // Componente ViewNoteButton con resaltado de búsqueda
+  // ViewNoteButton component with search highlight
   function ViewNoteButtonWithHighlight({ note = '', size = 'sm', searchTerm }) {
-    if (!note) return <span className="text-muted-foreground">Sin nota</span>
+    if (!note) return <span className="text-muted-foreground">No note</span>
 
     return (
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" size={size}>
-            Ver nota
+            View note
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Nota de la cuenta</DialogTitle>
+            <DialogTitle>Account Note</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
             <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap">
@@ -676,12 +726,12 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
   const columns = useMemo(() => [
     {
       accessorKey: 'projectName',
-      header: 'Proyecto',
+      header: 'Project',
       cell: ({ row }) => <div className="font-medium">{getProjectName(row.original.projectId)}</div>
     },
     {
       accessorKey: 'name',
-      header: 'Servicio',
+      header: 'Service',
       cell: ({ row }) => (
         <div className="font-medium">
           {highlightMatch(row.getValue('name') || 'none', searchTerm)}
@@ -695,7 +745,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
           <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
             Email <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.email ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('email')}>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.email ? 'Hide' : 'Show'} onClick={() => toggleForce('email')}>
             {!forceShowCols.email ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -716,8 +766,8 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       accessorKey: 'username',
       header: () => (
         <div className="flex items-center gap-1">
-          <span>Usuario</span>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.username ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('username')}>
+          <span>Username</span>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.username ? 'Hide' : 'Show'} onClick={() => toggleForce('username')}>
             {!forceShowCols.username ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -725,7 +775,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       cell: ({ row }) => (
         <SensitiveCellWithHighlight
           value={row.getValue('username') || 'none'}
-          label="Usuario"
+          label="Username"
           initialShow={forceShowCols.username ? true : false}
           searchTerm={searchTerm}
           showOverride={forceShowCols.username ? true : undefined}
@@ -736,8 +786,8 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       accessorKey: 'password',
       header: () => (
         <div className="flex items-center gap-1">
-          <span>Contraseña</span>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.password ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('password')}>
+          <span>Password</span>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.password ? 'Hide' : 'Show'} onClick={() => toggleForce('password')}>
             {!forceShowCols.password ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -745,7 +795,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       cell: ({ row }) => (
         <SensitiveCellWithHighlight
           value={row.getValue('password') || ''}
-          label="Contraseña"
+          label="Password"
           initialShow={forceShowCols.password ? true : false}
           searchTerm={searchTerm}
           showOverride={forceShowCols.password ? true : undefined}
@@ -757,7 +807,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       header: () => (
         <div className="flex items-center gap-1">
           <span>Links</span>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.links ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('links')}>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.links ? 'Hide' : 'Show'} onClick={() => toggleForce('links')}>
             {!forceShowCols.links ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -780,7 +830,7 @@ function SearchResults({ accounts, projects, searchTerm, pwSettings, setPwSettin
       accessorKey: 'createdAt',
       header: ({ column }) => (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Creado <ArrowUpDown className="ml-2 h-4 w-4" />
+          Created <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => (

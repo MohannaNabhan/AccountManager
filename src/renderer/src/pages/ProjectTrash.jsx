@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { toast } from 'sonner'
 import { EyeIcon, EyeOffIcon, CopyIcon, Trash2Icon, Undo2Icon } from 'lucide-react'
-import { getTrashAccounts, restoreAccount, hardDeleteAccount, onStorageUpdate, KEYS, getProjects } from '@/services/storage'
+import { getTrashAccounts, restoreAccount, deleteAccount, onStorageUpdate, KEYS, getProjects } from '@/services/storage'
 
 const MASKED_PASSWORD = '***********'
 
@@ -25,10 +25,10 @@ function SensitiveCell({ value, masked, label, accountId, field }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value || '')
-      toast.success(`${label} copiado`)
+      toast.success(`${label} copied`)
     } catch (err) {
       console.error('Clipboard error:', err)
-      toast.error(`No se pudo copiar ${label.toLowerCase()}`)
+      toast.error(`Failed to copy ${label.toLowerCase()}`)
     }
   }
   return (
@@ -48,10 +48,10 @@ export default function ProjectTrash() {
   const { id: projectId } = useParams()
   const [accounts, setAccounts] = useState([])
   const [search, setSearch] = useState('')
-  const [projectName, setProjectName] = useState('Proyecto')
+  const [projectName, setProjectName] = useState('Project')
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       setAccounts(await getTrashAccounts(projectId))
       const projects = await getProjects()
       const p = projects.find((x) => x.id === projectId)
@@ -75,11 +75,11 @@ export default function ProjectTrash() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div className="text-lg font-semibold">Papelera: {projectName} · {filtered.length} cuentas</div>
+        <div className="text-lg font-semibold">Trash: {projectName} · {filtered.length} accounts</div>
         <div className="flex items-center gap-2">
-          <Input placeholder="Buscar" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
+          <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
           <Button asChild variant="outline">
-            <Link to={`/projects/${projectId}`}>Volver a cuentas</Link>
+            <Link to={`/projects/${projectId}`}>Back to accounts</Link>
           </Button>
         </div>
       </div>
@@ -87,12 +87,12 @@ export default function ProjectTrash() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Usuario</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Username</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Contraseña</TableHead>
-            <TableHead>Eliminada</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead>Password</TableHead>
+            <TableHead>Deleted</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -100,33 +100,33 @@ export default function ProjectTrash() {
             <TableRow key={a.id}>
               <TableCell>{a.name || '-'}</TableCell>
               <TableCell>
-                <SensitiveCell accountId={a.id} field="username" value={a.username || ''} masked={maskUsername(a.username)} label="Usuario" />
+                <SensitiveCell accountId={a.id} field="username" value={a.username || ''} masked={maskUsername(a.username)} label="Username" />
               </TableCell>
               <TableCell>
                 <SensitiveCell accountId={a.id} field="email" value={a.email || ''} masked={maskEmail(a.email)} label="Email" />
               </TableCell>
               <TableCell>
-                <SensitiveCell accountId={a.id} field="password" value={a.password || ''} masked={MASKED_PASSWORD} label="Contraseña" />
+                <SensitiveCell accountId={a.id} field="password" value={a.password || ''} masked={MASKED_PASSWORD} label="Password" />
               </TableCell>
               <TableCell>{a.deletedAt ? new Date(a.deletedAt).toLocaleString() : '-'}</TableCell>
               <TableCell className="flex gap-2">
                 <Button
                   variant="outline"
                   onClick={async () => {
-                    await restoreAccount(a.id, { source: 'papelera' })
-                    toast.success('Cuenta restaurada')
+                    await restoreAccount(a.id, { source: 'trash' })
+                    toast.success('Account restored')
                   }}
                 >
-                  <Undo2Icon className="mr-1 size-4" /> Restaurar
+                  <Undo2Icon className="mr-1 size-4" /> Restore
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={async () => {
-                    await hardDeleteAccount(a.id)
-                    toast.success('Cuenta eliminada definitivamente')
+                    await deleteAccount(a.id)
+                    toast.success('Account deleted permanently')
                   }}
                 >
-                  <Trash2Icon className="mr-1 size-4" /> Borrar definitivamente
+                  <Trash2Icon className="mr-1 size-4" /> Delete permanently
                 </Button>
               </TableCell>
             </TableRow>

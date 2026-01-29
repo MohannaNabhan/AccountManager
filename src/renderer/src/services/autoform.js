@@ -3,13 +3,13 @@ import { storageGet, storageSet } from '@/services/storage'
 const AUTOFORM_KEY = 'autoFormData'
 
 const DEFAULT_AUTOFORM_DATA = {
-  // Múltiples datos personales
+  // Multiple personal data
   personal: [],
-  // Múltiples tarjetas de crédito
+  // Multiple credit cards
   creditCard: [],
-  // Múltiples direcciones
+  // Multiple addresses
   address: [],
-  // Múltiples correos electrónicos
+  // Multiple emails
   email: []
 }
 

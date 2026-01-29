@@ -17,7 +17,7 @@ export default function Settings() {
   const [confirm, setConfirm] = useState('')
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const st = await window.api.vault.status()
         const profRes = await window.api.vault.profiles.list()
@@ -28,8 +28,8 @@ export default function Settings() {
         setName(cur?.name || '')
         setNote(cur?.note || '')
       } catch (err) {
-        console.error('Cargar settings falló', err)
-        toast.error('No se pudieron cargar los ajustes de la cuenta')
+        console.error('Load settings failed', err)
+        toast.error('Could not load account settings')
       } finally {
         setLoading(false)
       }
@@ -40,92 +40,92 @@ export default function Settings() {
     try {
       const trimmed = (name || '').trim()
       if (trimmed.length > 20) {
-        toast.error('El nombre debe tener máximo 20 caracteres')
+        toast.error('Name must be at most 20 characters')
         return
       }
       const res = await window.api.vault.profiles.update(profileId, { name, note })
       if (res?.ok) {
-        toast.success('Perfil actualizado')
+        toast.success('Profile updated')
       } else {
-        toast.error(res?.error || 'No se pudo actualizar el perfil')
+        toast.error(res?.error || 'Could not update profile')
       }
     } catch (err) {
-      console.error('Actualizar perfil falló', err)
-      toast.error('Error actualizando el perfil')
+      console.error('Update profile failed', err)
+      toast.error('Error updating profile')
     }
   }
 
   async function changePassword() {
     if ((newPassword || '').length < 6) {
-      toast.error('La nueva contraseña es demasiado corta')
+      toast.error('New password is too short')
       return
     }
     if (newPassword !== confirm) {
-      toast.error('La confirmación no coincide')
+      toast.error('Confirmation does not match')
       return
     }
     try {
       const res = await window.api.vault.password.change(oldPassword, newPassword, profileId)
       if (res?.ok) {
-        toast.success('Contraseña cambiada')
+        toast.success('Password changed')
         setOldPassword('')
         setNewPassword('')
         setConfirm('')
-        // recargar para asegurar los estados
-        try { await window.api.app.reload() } catch {}
+        // reload to ensure states
+        try { await window.api.app.reload() } catch { }
       } else {
-        toast.error(res?.error || 'No se pudo cambiar la contraseña')
+        toast.error(res?.error || 'Could not change password')
       }
     } catch (err) {
-      console.error('Cambiar contraseña falló', err)
-      toast.error('Error cambiando la contraseña')
+      console.error('Change password failed', err)
+      toast.error('Error changing password')
     }
   }
 
 
 
   if (loading) {
-    return <div className="text-sm text-muted-foreground">Cargando…</div>
+    return <div className="text-sm text-muted-foreground">Loading…</div>
   }
 
   return (
     <div className="grid gap-6">
       <Card className="p-4">
-        <div className="font-medium mb-2">Tu cuenta</div>
+        <div className="font-medium mb-2">Your account</div>
         <div className="grid gap-3">
           <div className="grid gap-2">
-            <Label>Nombre</Label>
+            <Label>Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} />
           </div>
           <div className="grid gap-2">
-            <Label>Nota para recordar contraseña</Label>
-            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pista o nota para recordar tu contraseña" />
+            <Label>Note to remember password</Label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Hint or note to remember your password" />
           </div>
           <div className="flex gap-2 mt-2">
-            <Button type="button" onClick={saveProfile}>Guardar</Button>
+            <Button type="button" onClick={saveProfile}>Save</Button>
           </div>
         </div>
       </Card>
 
       <Card className="p-4">
-        <div className="font-medium mb-2">Cambiar contraseña maestra</div>
+        <div className="font-medium mb-2">Change master password</div>
         <div className="grid gap-3">
           <div className="grid gap-2">
-            <Label>Contraseña actual</Label>
+            <Label>Current password</Label>
             <Input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label>Nueva contraseña</Label>
+            <Label>New password</Label>
             <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label>Confirmar nueva contraseña</Label>
+            <Label>Confirm new password</Label>
             <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
           </div>
           <Separator className="my-1" />
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => { setOldPassword(''); setNewPassword(''); setConfirm('') }}>Cancelar</Button>
-            <Button type="button" onClick={changePassword}>Cambiar</Button>
+            <Button type="button" variant="outline" onClick={() => { setOldPassword(''); setNewPassword(''); setConfirm('') }}>Cancel</Button>
+            <Button type="button" onClick={changePassword}>Change</Button>
           </div>
         </div>
       </Card>

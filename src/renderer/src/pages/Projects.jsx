@@ -7,14 +7,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { getProjects, saveProject, deleteProject, getAccounts, onStorageUpdate, KEYS } from '@/services/storage'
+import { getProjects, saveProject, deleteProject, getAccounts, onStorageUpdate, KEYS, importProjectData } from '@/services/storage'
 import * as LucideIcons from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 const schema = z.object({
   id: z.string().optional(),
-  name: z.string().min(2, 'Nombre requerido'),
+  name: z.string().min(2, 'Name required'),
   description: z.string().optional(),
   icon: z.string().optional(),
 })
@@ -58,17 +58,18 @@ export default function Projects() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2 items-center">
-        <Input placeholder="Buscar proyecto" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <CreateProjectButton onCreated={() => toast.success('Proyecto creado')} />
+        <Input placeholder="Search project" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <CreateProjectButton onCreated={() => toast.success('Project created')} />
+        <ImportProjectButton onImported={() => toast.success('Project imported successfully')} />
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Descripción</TableHead>
-            <TableHead>Creado</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -83,7 +84,8 @@ export default function Projects() {
               <TableCell>{p.description || '-'}</TableCell>
               <TableCell>{new Date(p.createdAt).toLocaleString()}</TableCell>
               <TableCell className="flex gap-2">
-                <Button variant="outline" onClick={() => navigate(`/projects/${p.id}`)}>Ver cuentas</Button>
+                <Button variant="outline" onClick={() => navigate(`/projects/${p.id}`)}>View accounts</Button>
+                <ExportProjectButton project={p} />
                 <EditProjectButton initial={p} />
                 <DeleteProjectButton project={p} />
               </TableCell>
@@ -109,28 +111,28 @@ function DeleteProjectButton({ project }) {
   const handleDelete = async () => {
     try {
       await deleteProject(project.id)
-      toast.success(`Proyecto "${project.name}" y ${accountCount} cuenta(s) eliminadas`)
+      toast.success(`Project "${project.name}" and ${accountCount} account(s) deleted`)
     } catch (error) {
-      toast.error('Error al eliminar el proyecto')
+      toast.error('Error deleting project')
     }
   }
 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">Eliminar</Button>
+        <Button variant="destructive">Delete</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Eliminar proyecto "{project.name}"?</AlertDialogTitle>
+          <AlertDialogTitle>Delete project "{project.name}"?</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto y todas sus {accountCount} cuenta(s) asociada(s).
+            This action cannot be undone. The project and all its {accountCount} account(s) will be permanently deleted.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Eliminar proyecto y cuentas
+            Delete project and accounts
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -148,23 +150,23 @@ function CreateProjectButton({ onCreated }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Crear proyecto</Button>
+        <Button>Create project</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nuevo proyecto</DialogTitle>
+          <DialogTitle>New project</DialogTitle>
         </DialogHeader>
         <form className="space-y-3" onSubmit={form.handleSubmit(submit)}>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Nombre</label>
+            <label className="text-sm font-medium">Name</label>
             <div className="flex items-center gap-2">
               <IconRenderer name={form.watch('icon')} className="size-5" />
-              <Input placeholder="Nombre" {...form.register('name')} />
+              <Input placeholder="Name" {...form.register('name')} />
             </div>
           </div>
-          <Input placeholder="Descripción" {...form.register('description')} />
+          <Input placeholder="Description" {...form.register('description')} />
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Icono</label>
+            <label className="text-sm font-medium">Icon</label>
             <div className="grid grid-cols-5 gap-2 p-1">
               {GENERIC_ICON_NAMES.map((n) => {
                 const Comp = LucideIcons[n]
@@ -178,14 +180,14 @@ function CreateProjectButton({ onCreated }) {
                     title={n.replace('Icon', '')}
                   >
                     <Comp className="size-5" />
-                    <span className="truncate max-w-[80px]">{n.replace('Icon','')}</span>
+                    <span className="truncate max-w-[80px]">{n.replace('Icon', '')}</span>
                   </button>
                 )
               })}
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Guardar</Button>
+            <Button type="submit">Save</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -198,28 +200,28 @@ function EditProjectButton({ initial }) {
   const submit = async (values) => {
     const project = { ...initial, ...values }
     await saveProject(project)
-    toast.success('Proyecto actualizado')
+    toast.success('Project updated')
   }
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="secondary">Editar</Button>
+        <Button variant="secondary">Edit</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar proyecto</DialogTitle>
+          <DialogTitle>Edit project</DialogTitle>
         </DialogHeader>
         <form className="space-y-3" onSubmit={form.handleSubmit(submit)}>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Nombre</label>
+            <label className="text-sm font-medium">Name</label>
             <div className="flex items-center gap-2">
               <IconRenderer name={form.watch('icon')} className="size-5" />
-              <Input placeholder="Nombre" {...form.register('name')} />
+              <Input placeholder="Name" {...form.register('name')} />
             </div>
           </div>
-          <Input placeholder="Descripción" {...form.register('description')} />
+          <Input placeholder="Description" {...form.register('description')} />
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Icono</label>
+            <label className="text-sm font-medium">Icon</label>
             <div className="grid grid-cols-5 gap-2 p-1">
               {GENERIC_ICON_NAMES.map((n) => {
                 const Comp = LucideIcons[n]
@@ -233,17 +235,83 @@ function EditProjectButton({ initial }) {
                     title={n.replace('Icon', '')}
                   >
                     <Comp className="size-5" />
-                    <span className="truncate max-w-[80px]">{n.replace('Icon','')}</span>
+                    <span className="truncate max-w-[80px]">{n.replace('Icon', '')}</span>
                   </button>
                 )
               })}
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Guardar cambios</Button>
+            <Button type="submit">Save changes</Button>
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
+    </Dialog >
+  )
+}
+
+function ExportProjectButton({ project }) {
+  const handleExport = async () => {
+    try {
+      const accounts = await getAccounts(project.id)
+      const data = {
+        project,
+        accounts
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${project.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.proyect`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success('Project exported')
+    } catch (error) {
+      console.error(error)
+      toast.error('Error exporting project')
+    }
+  }
+
+  return (
+    <Button variant="outline" size="icon" onClick={handleExport} title="Export project">
+      <LucideIcons.DownloadIcon className="size-4" />
+    </Button>
+  )
+}
+
+function ImportProjectButton({ onImported }) {
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      await importProjectData(data)
+      onImported?.()
+    } catch (error) {
+      console.error(error)
+      toast.error('Error importing: Invalid file')
+    } finally {
+      if (e.target) e.target.value = ''
+    }
+  }
+
+  return (
+    <>
+      <input
+        type="file"
+        accept=".json"
+        className="hidden"
+        id="import-project-input"
+        onChange={handleImport}
+      />
+      <Button variant="outline" onClick={() => document.getElementById('import-project-input')?.click()}>
+        <LucideIcons.UploadIcon className="mr-2 size-4" />
+        Import
+      </Button>
+    </>
   )
 }

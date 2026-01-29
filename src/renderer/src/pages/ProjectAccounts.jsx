@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import * as LucideIcons from 'lucide-react'
 import {
   Table,
   TableHeader,
@@ -49,7 +50,8 @@ import {
   deleteAccount,
   onStorageUpdate,
   KEYS,
-  getProjects
+  getProjects,
+  importAccountsToProject
 } from '@/services/storage'
 import { getPasswordSettings, savePasswordSettings, generatePassword } from '@/services/passwords'
 import { generateUsername, getUsernameSettings, saveUsernameSettings } from '@/services/usernames'
@@ -57,6 +59,9 @@ import {
   Settings2Icon,
   CopyIcon,
   CheckIcon,
+  UploadIcon,
+  DownloadIcon,
+  Trash2Icon,
   EyeIcon,
   EyeOffIcon,
   LinkIcon,
@@ -76,7 +81,6 @@ import {
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   flexRender
@@ -88,7 +92,7 @@ import { toast } from 'sonner'
 const schema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
-  email: z.string().email('Email inválido').or(z.literal('')).optional(),
+  email: z.string().email('Invalid email').or(z.literal('')).optional(),
   username: z.string().optional(),
   password: z.string().optional(),
   note: z.string().optional(),
@@ -98,9 +102,9 @@ const schema = z.object({
 const FIELD_LABELS = {
   name: 'Service',
   email: 'Email',
-  username: 'Usuario',
-  password: 'Contraseña',
-  note: 'Nota',
+  username: 'Username',
+  password: 'Password',
+  note: 'Note',
   links: 'Links'
 }
 
@@ -126,11 +130,11 @@ function SensitiveCell({ value = '', masked, label, initialShow = false, showOve
     try {
       await navigator.clipboard.writeText(value)
       setCopied(true)
-      toast.success(`${label} copiado`)
+      toast.success(`${label} copied`)
       setTimeout(() => setCopied(false), 1200)
     } catch (err) {
       console.error('Clipboard error:', err)
-      toast.error(`No se pudo copiar ${label.toLowerCase()}`)
+      toast.error(`Failed to copy ${label.toLowerCase()}`)
     }
   }
   return (
@@ -142,7 +146,7 @@ function SensitiveCell({ value = '', masked, label, initialShow = false, showOve
             type="button"
             variant="ghost"
             className="h-8 w-8 p-0"
-            title={effectiveShow ? 'Ocultar' : 'Ver'}
+            title={effectiveShow ? 'Hide' : 'Show'}
             onClick={() => setShow((v) => !v)}
             disabled={showOverride === true}
           >
@@ -152,7 +156,7 @@ function SensitiveCell({ value = '', masked, label, initialShow = false, showOve
             type="button"
             variant="outline"
             className="h-8 w-8 p-0"
-            title={`Copiar ${label}`}
+            title={`Copy ${label}`}
             onClick={onCopy}
           >
             {copied ? (
@@ -170,18 +174,18 @@ function SensitiveCell({ value = '', masked, label, initialShow = false, showOve
 function ViewNoteButton({ note = '', size = 'sm' }) {
   const [open, setOpen] = useState(false)
   if (!note || !note.length) {
-    return <span className="text-muted-foreground text-xs">none</span>
+    return <span className="text-muted-foreground text-xs">No note</span>
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size={size} className="h-8 w-8 p-0" title="Ver nota">
+        <Button type="button" variant="ghost" size={size} className="h-8 w-8 p-0" title="View note">
           <EyeIcon className="size-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nota</DialogTitle>
+          <DialogTitle>Note</DialogTitle>
         </DialogHeader>
         <div className="mt-2 whitespace-pre-wrap break-words text-sm">
           {note}
@@ -191,12 +195,71 @@ function ViewNoteButton({ note = '', size = 'sm' }) {
   )
 }
 
+function SelectedAccountsActions({ selectedCount, table, project, onAction }) {
+  const handleExport = () => {
+    try {
+      const selectedRows = table.getFilteredSelectedRowModel().rows
+      const accounts = selectedRows.map(r => r.original)
+      if (accounts.length === 0) return
+
+      const data = {
+        project: project || { name: 'Selection', id: 'partial' },
+        accounts
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${(project?.name || 'export').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.account`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success(`${accounts.length} accounts exported`)
+      onAction?.()
+    } catch (err) {
+      console.error(err)
+      toast.error('Error exporting')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete ${selectedCount} selected accounts?`)) return
+    try {
+      const selectedRows = table.getFilteredSelectedRowModel().rows
+      const accounts = selectedRows.map(r => r.original)
+      for (const acc of accounts) {
+        await deleteAccount(acc.id)
+      }
+      toast.success(`${accounts.length} accounts deleted`)
+      onAction?.()
+    } catch (err) {
+      console.error(err)
+      toast.error('Error deleting accounts')
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1 ml-2 bg-muted/50 p-1 rounded-md border animate-in fade-in slide-in-from-right-4 duration-200">
+      <span className="text-xs font-medium px-2">{selectedCount} selected</span>
+      <Button size="sm" variant="outline" className="h-8" onClick={handleExport} title="Export selection">
+        <DownloadIcon className="size-4 mr-2" />
+        Export
+      </Button>
+      <Button size="sm" variant="destructive" className="h-8" onClick={handleDelete} title="Delete selection">
+        <Trash2Icon className="size-4" />
+      </Button>
+    </div>
+  )
+}
+
 export default function ProjectAccounts() {
   const { id: projectId } = useParams()
   const [accounts, setAccounts] = useState([])
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
-  const [projectName, setProjectName] = useState('Proyecto')
+  const [project, setProject] = useState(null)
+  const [projectName, setProjectName] = useState('Project')
   const [copiedLinkTableId, setCopiedLinkTableId] = useState(null)
   const [pwSettings, setPwSettings] = useState({
     length: 15,
@@ -213,11 +276,14 @@ export default function ProjectAccounts() {
   const toggleForce = (key) => setForceShowCols((s) => ({ ...s, [key]: !s[key] }))
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       setAccounts(await getAccounts(projectId))
       const projects = await getProjects()
       const p = projects.find((x) => x.id === projectId)
-      if (p) setProjectName(p.name)
+      if (p) {
+        setProjectName(p.name)
+        setProject(p)
+      }
       setPwSettings(await getPasswordSettings())
     })()
     const unsub = onStorageUpdate(async ({ key }) => {
@@ -233,14 +299,14 @@ export default function ProjectAccounts() {
         <Checkbox
           checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Seleccionar todo"
+          aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Seleccionar fila"
+          aria-label="Select row"
         />
       ),
       enableSorting: false,
@@ -255,8 +321,8 @@ export default function ProjectAccounts() {
       accessorKey: 'username',
       header: () => (
         <div className="flex items-center gap-1">
-          <span>Usuario</span>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.username ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('username')}>
+          <span>Username</span>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.username ? 'Hide' : 'Show'} onClick={() => toggleForce('username')}>
             {!forceShowCols.username ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -272,7 +338,7 @@ export default function ProjectAccounts() {
           <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
             Email <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.email ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('email')}>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.email ? 'Hide' : 'Show'} onClick={() => toggleForce('email')}>
             {!forceShowCols.email ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -287,8 +353,8 @@ export default function ProjectAccounts() {
       accessorKey: 'password',
       header: () => (
         <div className="flex items-center gap-1">
-          <span>Contraseña</span>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.password ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('password')}>
+          <span>Password</span>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.password ? 'Hide' : 'Show'} onClick={() => toggleForce('password')}>
             {!forceShowCols.password ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -302,7 +368,7 @@ export default function ProjectAccounts() {
       header: () => (
         <div className="flex items-center gap-1">
           <span>Link</span>
-          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.links ? 'Ocultar' : 'Ver'} onClick={() => toggleForce('links')}>
+          <Button type="button" variant="ghost" className="h-8 w-8 p-0" title={forceShowCols.links ? 'Hide' : 'Show'} onClick={() => toggleForce('links')}>
             {!forceShowCols.links ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
           </Button>
         </div>
@@ -323,7 +389,7 @@ export default function ProjectAccounts() {
     },
     {
       accessorKey: 'note',
-      header: 'Nota',
+      header: 'Note',
       cell: ({ row }) => <ViewNoteButton note={row.getValue('note') || ''} />
     },
     {
@@ -335,32 +401,32 @@ export default function ProjectAccounts() {
           <div className="flex items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm">Detalles</Button>
+                <Button variant="outline" size="sm">Details</Button>
               </SheetTrigger>
               <SheetContent className="duration-50 !max-w-none !w-[670px] px-4">
                 <SheetHeader>
-                  <SheetTitle>Detalles de cuenta</SheetTitle>
+                  <SheetTitle>Account Details</SheetTitle>
                   <SheetDescription>{a.email}</SheetDescription>
                 </SheetHeader>
                 <AccountDetails account={a} />
               </SheetContent>
             </Sheet>
             <EditAccountDialog
-                account={a}
-                projectId={a.projectId}
-                pwSettings={pwSettings}
-                setPwSettings={setPwSettings}
-                mode="full"
-              />
+              account={a}
+              projectId={a.projectId}
+              pwSettings={pwSettings}
+              setPwSettings={setPwSettings}
+              mode="full"
+            />
             <Button
               variant="destructive"
               size="sm"
               onClick={async () => {
                 await deleteAccount(a.id)
-                toast.success('Cuenta movida a la papelera')
+                toast.success('Account moved to trash')
               }}
             >
-              Eliminar
+              Delete
             </Button>
           </div>
         )
@@ -374,16 +440,10 @@ export default function ProjectAccounts() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 7
-      }
-    },
     state: {
       sorting,
       columnFilters,
@@ -392,38 +452,19 @@ export default function ProjectAccounts() {
     }
   })
 
-  // Ajustar pageSize automáticamente cuando las opciones estén deshabilitadas
-  useEffect(() => {
-    const currentPageSize = table.getState().pagination.pageSize
-    const availableOptions = [7, 10, 20, 30, 40, 50]
-    
-    // Si el pageSize actual es mayor que el número de cuentas (y no es "todas")
-    if (currentPageSize > accounts.length && currentPageSize < 1000) {
-      // Encontrar la opción más grande que sea válida
-      const validOption = availableOptions
-        .filter(size => size <= accounts.length)
-        .sort((a, b) => b - a)[0] // Ordenar descendente y tomar el primero
-      
-      if (validOption) {
-        table.setPageSize(validOption)
-      } else if (accounts.length > 0) {
-        // Si ninguna opción estándar es válida, usar "todas"
-        table.setPageSize(accounts.length)
-      }
-    }
-  }, [accounts.length, table])
+
 
   return (
     <div className="flex flex-col gap-4 h-full overflow-hidden">
       <div className="flex items-center justify-between">
-        <div className="text-lg font-semibold">Cuentas de: {projectName}</div>
+        <div className="text-lg font-semibold">Accounts for: {projectName}</div>
         <Button asChild variant="outline">
-          <Link to="/projects">Volver a proyectos</Link>
+          <Link to="/projects">Back to projects</Link>
         </Button>
       </div>
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Buscar por service, usuario, email, link"
+          placeholder="Search by service, username, email, link"
           value={search}
           onChange={(e) => {
             const val = e.target.value
@@ -438,7 +479,7 @@ export default function ProjectAccounts() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Columnas <ChevronDown className="ml-2 h-4 w-4" />
+              Columns <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -459,7 +500,16 @@ export default function ProjectAccounts() {
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-        <CreateAccountButton projectId={projectId} onCreated={() => toast.success('Cuenta creada')} />
+        <CreateAccountButton projectId={projectId} onCreated={() => toast.success('Account created')} />
+        <ImportAccountsButton projectId={projectId} onImported={(count) => toast.success(`${count} accounts imported`)} />
+        {Object.keys(rowSelection).length > 0 && (
+          <SelectedAccountsActions
+            selectedCount={Object.keys(rowSelection).length}
+            table={table}
+            project={project}
+            onAction={() => setRowSelection({})}
+          />
+        )}
       </div>
 
       <ContentScroll mainClass="mt-2 !h-[71%]" className="p-1">
@@ -491,149 +541,16 @@ export default function ProjectAccounts() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Sin resultados.
+                  No results.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </ContentScroll>
-      
-      {/* Controles de paginación */}
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {table.getFilteredRowModel().rows.length} fila(s) seleccionada(s).
-        </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Filas por página</p>
-            <Select
-              value={table.getState().pagination.pageSize >= accounts.length ? 'all' : String(table.getState().pagination.pageSize)}
-              onValueChange={(value) => {
-                if (value === 'all') {
-                  table.setPageSize(accounts.length || 1000)
-                } else {
-                  table.setPageSize(Number(value))
-                }
-              }}
-            >
-              <SelectTrigger className="h-8 w-[80px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[7, 10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem 
-                    key={pageSize} 
-                    value={String(pageSize)}
-                    disabled={accounts.length < pageSize}
-                  >
-                    {pageSize}
-                  </SelectItem>
-                ))}
-                <SelectItem value="all" disabled={accounts.length === 0}>
-                  Todas
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            {table.getState().pagination.pageSize >= accounts.length ? 
-              `Todas (${accounts.length})` : 
-              `Página ${table.getState().pagination.pageIndex + 1} de ${table.getPageCount()}`
-            }
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Ir a la primera página</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-4 w-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5"
-                />
-              </svg>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Ir a la página anterior</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-4 w-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 19.5 8.25 12l7.5-7.5"
-                />
-              </svg>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Ir a la página siguiente</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-4 w-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                />
-              </svg>
-            </Button>
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Ir a la última página</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-4 w-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5"
-                />
-              </svg>
-            </Button>
-          </div>
-        </div>
+
+      <div className="text-sm text-muted-foreground py-2 text-center">
+        {table.getFilteredRowModel().rows.length} account(s)
       </div>
     </div>
   )
@@ -655,7 +572,7 @@ function CreateAccountButton({ projectId, onCreated }) {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [userSettingsOpen, setUserSettingsOpen] = useState(false)
   const [userSettings, setUserSettings] = useState({
-    prefix: 'usuario',
+    prefix: 'user',
     length: 6,
     includeLetters: true,
     includeNumbers: true,
@@ -668,7 +585,7 @@ function CreateAccountButton({ projectId, onCreated }) {
   const [copiedEmail, setCopiedEmail] = useState(false)
   const [showPwdInput, setShowPwdInput] = useState(false)
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       setPwSettings(await getPasswordSettings())
       setUserSettings(await getUsernameSettings())
     })()
@@ -695,7 +612,7 @@ function CreateAccountButton({ projectId, onCreated }) {
     const hasEmail = (values.email || '').trim().length > 0
     const hasNote = (values.note || '').trim().length > 0
     if (!name || !(hasUsername || hasEmail || hasNote)) {
-      toast.error('Debes incluir Service y al menos uno de (Email, Usuario o Nota)')
+      toast.error('You must include Service and at least one of (Email, Username or Note)')
       return
     }
     const rawLink = (newLink || '').trim()
@@ -708,9 +625,9 @@ function CreateAccountButton({ projectId, onCreated }) {
       createdAt: Date.now(),
       projectId
     }
-    await saveAccount(account, { source: 'crear' })
+    await saveAccount(account, { source: 'create' })
     onCreated?.(account)
-    // Resetear formulario
+    // Reset form
     form.reset({ name: '', username: '', email: '', password: '', note: '', links: [] })
     setNewLink('')
     setCreateOpen(false)
@@ -725,9 +642,9 @@ function CreateAccountButton({ projectId, onCreated }) {
       try {
         await navigator.clipboard.writeText(pwd)
         setCopiedPwd(true)
-        toast.success('Contraseña copiada')
+        toast.success('Password copied')
         setTimeout(() => setCopiedPwd(false), 1200)
-      } catch {}
+      } catch { }
     }
   }
   const onGenerateUser = () => {
@@ -742,7 +659,7 @@ function CreateAccountButton({ projectId, onCreated }) {
         setCopiedUser(true)
         toast.success('Usuario copiado')
         setTimeout(() => setCopiedUser(false), 1200)
-      } catch {}
+      } catch { }
     }
   }
   const onSaveSettings = async () => {
@@ -1450,5 +1367,45 @@ function AccountDetails({ account }) {
         </div>
       )}
     </ContentScroll>
+  )
+}
+
+
+
+function ImportAccountsButton({ projectId, onImported }) {
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      const count = await importAccountsToProject(projectId, data)
+      if (count > 0) {
+        onImported?.(count)
+      } else {
+        toast.info('No se encontraron cuentas para importar')
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Error al importar: Archivo inválido')
+    } finally {
+      if (e.target) e.target.value = ''
+    }
+  }
+
+  return (
+    <>
+      <input
+        type="file"
+        accept=".json"
+        className="hidden"
+        id="import-accounts-input"
+        onChange={handleImport}
+      />
+      <Button variant="outline" size="icon" onClick={() => document.getElementById('import-accounts-input')?.click()} title="Importar cuentas">
+        <UploadIcon className="size-4" />
+      </Button>
+    </>
   )
 }

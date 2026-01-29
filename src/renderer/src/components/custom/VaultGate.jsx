@@ -26,36 +26,36 @@ export default function VaultGate({ children }) {
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        if (!window.api?.vault) {
-          console.warn('Vault API not available')
+      ; (async () => {
+        try {
+          if (!window.api?.vault) {
+            console.warn('Vault API not available')
+            if (mounted) {
+              setStatus({ hasVault: false, locked: false, currentProfile: 'default', profiles: [] })
+              setMode('setup')
+            }
+            return
+          }
+
+          const st = await window.api.vault.status()
+          const profRes = await window.api.vault.profiles.list()
+          const profiles = profRes?.profiles || []
+          const cur = st?.currentProfile || profRes?.currentProfile || 'default'
+          if (mounted) {
+            setStatus({ hasVault: !!st?.hasVault, locked: !!st?.locked, currentProfile: cur, profiles })
+            setSelectedProfile(cur)
+            setMode(st?.hasVault ? 'unlock' : 'setup')
+          }
+        } catch (error) {
+          console.error('Error loading vault status:', error)
           if (mounted) {
             setStatus({ hasVault: false, locked: false, currentProfile: 'default', profiles: [] })
             setMode('setup')
           }
-          return
+        } finally {
+          if (mounted) setLoading(false)
         }
-        
-        const st = await window.api.vault.status()
-        const profRes = await window.api.vault.profiles.list()
-        const profiles = profRes?.profiles || []
-        const cur = st?.currentProfile || profRes?.currentProfile || 'default'
-        if (mounted) {
-          setStatus({ hasVault: !!st?.hasVault, locked: !!st?.locked, currentProfile: cur, profiles })
-          setSelectedProfile(cur)
-          setMode(st?.hasVault ? 'unlock' : 'setup')
-        }
-      } catch (error) {
-        console.error('Error loading vault status:', error)
-        if (mounted) {
-          setStatus({ hasVault: false, locked: false, currentProfile: 'default', profiles: [] })
-          setMode('setup')
-        }
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    })()
+      })()
     return () => {
       mounted = false
     }
@@ -68,21 +68,21 @@ export default function VaultGate({ children }) {
         setVaultData({ projectCount: 0, accountCount: 0 })
         return
       }
-      
+
       try {
         // Obtener estadísticas desde el área no encriptada
         const statsResult = await window.api.vault.stats.get()
         if (statsResult?.ok && statsResult.stats) {
           const profileStats = statsResult.stats[selectedProfile]
           if (profileStats) {
-            setVaultData({ 
-              projectCount: profileStats.projectCount || 0, 
-              accountCount: profileStats.accountCount || 0 
+            setVaultData({
+              projectCount: profileStats.projectCount || 0,
+              accountCount: profileStats.accountCount || 0
             })
             return
           }
         }
-        
+
         // Fallback: cargar desde datos encriptados si no hay estadísticas
         if (status.hasVault && !status.locked) {
           const projects = await getProjects()
@@ -90,7 +90,7 @@ export default function VaultGate({ children }) {
           const projectCount = projects.length
           const accountCount = allAccounts.length
           setVaultData({ projectCount, accountCount })
-          
+
           // Actualizar estadísticas para futuras consultas
           await window.api.vault.stats.update(selectedProfile, projectCount, accountCount)
         }
@@ -99,7 +99,7 @@ export default function VaultGate({ children }) {
         setVaultData({ projectCount: 0, accountCount: 0 })
       }
     }
-    
+
     loadVaultData()
   }, [selectedProfile, status.hasVault, status.locked])
 
@@ -126,34 +126,34 @@ export default function VaultGate({ children }) {
 
   const setupVault = async () => {
     if ((password || '').trim().length < 6) {
-      toast.warning('La contraseña debe tener al menos 6 caracteres')
+      toast.warning('Password must be at least 6 characters')
       return
     }
     if (password !== confirm) {
-      toast.warning('Las contraseñas no coinciden')
+      toast.warning('Passwords do not match')
       return
     }
     setBusy(true)
     try {
-      // Siempre crear una nueva cuenta en modo "setup"
+      // Always create a new account in "setup" mode
       const name = (profileName || '').trim()
       if (name.length === 0) {
-        toast.warning('Ingresa el nombre de la cuenta')
+        toast.warning('Enter account name')
         return
       }
       if (name.length > 20) {
-        toast.warning('El nombre debe tener máximo 20 caracteres')
+        toast.warning('Name must be at most 20 characters')
         return
       }
       const created = await window.api.vault.profiles.create(name)
       if (!created?.ok) {
-        toast.error(created?.error || 'No se pudo crear la cuenta')
+        toast.error(created?.error || 'Could not create account')
         return
       }
       setSelectedProfile(created.profileId)
       const res = await window.api.vault.setup(password, name)
       if (res?.ok) {
-        toast.success('Vault configurado')
+        toast.success('Vault configured')
         const list = await window.api.vault.profiles.list()
         setStatus((s) => ({
           ...s,
@@ -163,7 +163,7 @@ export default function VaultGate({ children }) {
           profiles: list?.profiles || s.profiles
         }))
       } else {
-        toast.error(res?.error || 'No se pudo configurar')
+        toast.error(res?.error || 'Could not configure')
       }
     } finally {
       setBusy(false)
@@ -172,17 +172,17 @@ export default function VaultGate({ children }) {
 
   const unlockVault = async () => {
     if ((password || '').trim().length < 1) {
-      toast.warning('Ingresa la contraseña')
+      toast.warning('Enter password')
       return
     }
     setBusy(true)
     try {
       const res = await window.api.vault.unlock(password, selectedProfile)
       if (res?.ok) {
-        toast.success('Desbloqueado')
+        toast.success('Unlocked')
         setStatus((s) => ({ ...s, hasVault: true, locked: false, currentProfile: res.profileId || selectedProfile }))
       } else {
-        toast.error(res?.error || 'Contraseña incorrecta')
+        toast.error(res?.error || 'Incorrect password')
       }
     } finally {
       setBusy(false)
@@ -191,19 +191,19 @@ export default function VaultGate({ children }) {
 
   const deleteProfile = async () => {
     if ((password || '').trim().length < 1) {
-      toast.warning('Ingresa la contraseña para eliminar')
+      toast.warning('Enter password to delete')
       return
     }
     setBusy(true)
     try {
       const fn = window.api?.vault?.profiles?.delete || window.api?.vault?.profiles?.remove
       if (typeof fn !== 'function') {
-        toast.error('Eliminar no está disponible. Reinicia la aplicación.')
+        toast.error('Delete not available. Restart the application.')
         return
       }
       const res = await fn(selectedProfile, password)
       if (res?.ok) {
-        toast.success(`Vault eliminado junto con ${vaultData.projectCount} proyecto(s) y ${vaultData.accountCount} cuenta(s)`)
+        toast.success(`Vault deleted along with ${vaultData.projectCount} project(s) and ${vaultData.accountCount} account(s)`)
         const list = await window.api.vault.profiles.list()
         const remaining = list?.profiles || []
         if (remaining.length === 0) {
@@ -218,7 +218,7 @@ export default function VaultGate({ children }) {
           setSelectedProfile(nextId)
         }
       } else {
-        toast.error(res?.error || 'No se pudo eliminar la cuenta')
+        toast.error(res?.error || 'Could not delete account')
       }
     } finally {
       setBusy(false)
@@ -228,7 +228,7 @@ export default function VaultGate({ children }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-sm text-muted-foreground">Cargando…</div>
+        <div className="text-sm text-muted-foreground">Loading…</div>
       </div>
     )
   }
@@ -240,95 +240,72 @@ export default function VaultGate({ children }) {
       <div className="h-screen _move w-full flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded border p-4 shadow-sm bg-background">
           <div className="text-lg font-medium mb-1">
-            {isSetup ? 'Configurar contraseña maestra' : 'Desbloquear'}
+            {isSetup ? 'Setup master password' : 'Unlock'}
           </div>
           <div className="text-xs text-muted-foreground mb-3">
             {isSetup
-              ? 'Esta contraseña protegerá toda la información (proyectos, cuentas, notas).'
-              : 'Ingresa la contraseña maestra para acceder a la información cifrada.'}
+              ? 'This password will protect all information (projects, accounts, notes).'
+              : 'Enter master password to access encrypted information.'}
           </div>
           <form onSubmit={handleSubmit} className="flex flex-col gap-y-3">
-          {status.profiles?.length > 0 && !isSetup && (
-            <div className="grid gap-2 mb-2">
-              <Label>Cuenta</Label>
-              <Select value={selectedProfile} onValueChange={(v) => setSelectedProfile(v)}>
-                <SelectTrigger className="h-9 w-full">
-                  <SelectValue placeholder="Selecciona una cuenta" />
-                </SelectTrigger>
-                <SelectContent>
-                  {status.profiles.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          {isSetup && (
-            <div className="grid gap-2 mb-2">
-              <Label>Nombre de la cuenta</Label>
-              <Input
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                placeholder="Mi cuenta"
-                maxLength={20}
-              />
-            </div>
-          )}
-          <div className="grid gap-2">
-            <Label>Contraseña</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                ref={passwordInputRef}
-                type={
-                  isSetup
-                    ? showPwdSetup
-                      ? 'text'
-                      : 'password'
-                    : showPwdUnlock
-                      ? 'text'
-                      : 'password'
-                }
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-9 w-9 p-0 border border-border"
-                onClick={() => (isSetup ? setShowPwdSetup((v) => !v) : setShowPwdUnlock((v) => !v))}
-              >
-                {isSetup ? (
-                  !showPwdSetup ? (
-                    <EyeOffIcon className="size-4" />
-                  ) : (
-                    <EyeIcon className="size-4" />
-                  )
-                ) : !showPwdUnlock ? (
-                  <EyeOffIcon className="size-4" />
-                ) : (
-                  <EyeIcon className="size-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-          {isSetup && (
-            <div className="grid gap-2 mt-2">
-              <Label>Confirmar contraseña</Label>
+            {status.profiles?.length > 0 && !isSetup && (
+              <div className="grid gap-2 mb-2">
+                <Label>Account</Label>
+                <Select value={selectedProfile} onValueChange={(v) => setSelectedProfile(v)}>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue placeholder="Select an account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {status.profiles.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {isSetup && (
+              <div className="grid gap-2 mb-2">
+                <Label>Account name</Label>
+                <Input
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="My account"
+                  maxLength={20}
+                />
+              </div>
+            )}
+            <div className="grid gap-2">
+              <Label>Password</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type={showConfirmSetup ? 'text' : 'password'}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
+                  ref={passwordInputRef}
+                  type={
+                    isSetup
+                      ? showPwdSetup
+                        ? 'text'
+                        : 'password'
+                      : showPwdUnlock
+                        ? 'text'
+                        : 'password'
+                  }
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <Button
                   type="button"
                   variant="secondary"
                   className="h-9 w-9 p-0 border border-border"
-                  onClick={() => setShowConfirmSetup((v) => !v)}
+                  onClick={() => (isSetup ? setShowPwdSetup((v) => !v) : setShowPwdUnlock((v) => !v))}
                 >
-                  {!showConfirmSetup ? (
+                  {isSetup ? (
+                    !showPwdSetup ? (
+                      <EyeOffIcon className="size-4" />
+                    ) : (
+                      <EyeIcon className="size-4" />
+                    )
+                  ) : !showPwdUnlock ? (
                     <EyeOffIcon className="size-4" />
                   ) : (
                     <EyeIcon className="size-4" />
@@ -336,10 +313,33 @@ export default function VaultGate({ children }) {
                 </Button>
               </div>
             </div>
-          )}
+            {isSetup && (
+              <div className="grid gap-2 mt-2">
+                <Label>Confirm password</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type={showConfirmSetup ? 'text' : 'password'}
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-9 w-9 p-0 border border-border"
+                    onClick={() => setShowConfirmSetup((v) => !v)}
+                  >
+                    {!showConfirmSetup ? (
+                      <EyeOffIcon className="size-4" />
+                    ) : (
+                      <EyeIcon className="size-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
             <Separator className="my-3" />
             <Button type="submit" disabled={busy} className="w-full">
-              {isSetup ? 'Guardar y activar' : 'Desbloquear'}
+              {isSetup ? 'Save and activate' : 'Unlock'}
             </Button>
           </form>
           <div className="mt-2 w-full flex items-center justify-between">
@@ -349,52 +349,52 @@ export default function VaultGate({ children }) {
                 variant="ghost"
                 onClick={() => setMode((m) => (m === 'unlock' ? 'setup' : 'unlock'))}
               >
-                {mode === 'unlock' ? 'Crear nueva cuenta' : 'Volver a iniciar'}
+                {mode === 'unlock' ? 'Create new account' : 'Back to login'}
               </Button>
             )}
             {!isSetup && status.profiles?.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive" disabled={busy}>
-                    Eliminar Profile
+                    Delete Profile
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      ¿Eliminar vault "
+                      Delete vault "
                       {status.profiles.find((p) => p.id === selectedProfile)?.name ||
                         selectedProfile}
                       "?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta acción no se puede deshacer. Se eliminará permanentemente:
-                      <br />• El Profile y su configuración
-                      <br />• {vaultData.projectCount} proyecto(s)
-                      <br />• {vaultData.accountCount} cuenta(s)
-                      <br />• Todas las notas y configuraciones asociadas
+                      This action cannot be undone. It will permanently delete:
+                      <br />• The Profile and its configuration
+                      <br />• {vaultData.projectCount} project(s)
+                      <br />• {vaultData.accountCount} account(s)
+                      <br />• All notes and associated settings
                       <br />
                       <br />
-                      Ingresa tu contraseña para confirmar:
+                      Enter your password to confirm:
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <div className="my-4">
                     <Input
                       type="password"
-                      placeholder="Contraseña del Profile"
+                      placeholder="Profile Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={busy}
                     />
                   </div>
                   <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setPassword('')}>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel onClick={() => setPassword('')}>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={deleteProfile}
                       disabled={busy || !password.trim()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Eliminar Profile y todos los datos
+                      Delete Profile and all data
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

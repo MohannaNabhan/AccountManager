@@ -6,11 +6,11 @@ export default function WindowFrame({ children }) {
   const [isMaximized, setIsMaximized] = useState(false)
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const m = await window.api.window.isMaximized()
         setIsMaximized(!!m)
-      } catch {}
+      } catch { }
     })()
   }, [])
 
@@ -19,7 +19,7 @@ export default function WindowFrame({ children }) {
       await window.api.window.toggleMaximize()
       const m = await window.api.window.isMaximized()
       setIsMaximized(!!m)
-    } catch {}
+    } catch { }
   }
 
   return (
@@ -37,7 +37,7 @@ export default function WindowFrame({ children }) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Minimizar"
+            aria-label="Minimize"
             onClick={() => window.api.window.minimize()}
             className="!px-4"
           >
@@ -46,7 +46,7 @@ export default function WindowFrame({ children }) {
           {/*<Button
             variant="ghost"
             size="icon-sm"
-            aria-label={isMaximized ? 'Restaurar' : 'Maximizar'}
+            aria-label={isMaximized ? 'Restore' : 'Maximize'}
             onClick={handleToggleMaximize}
           >
             {isMaximized ? <Square className="size-4" /> : <Maximize2 className="size-4" />}
@@ -54,7 +54,7 @@ export default function WindowFrame({ children }) {
           <Button
             variant="destructive"
             size="icon-sm"
-            aria-label="Cerrar"
+            aria-label="Close"
             onClick={() => window.api.window.close()}
             className="!px-4"
           >

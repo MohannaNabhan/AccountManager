@@ -7,13 +7,13 @@ import crypto from 'crypto'
 import http from 'http'
 import url from 'url'
 
-// Variables globales
+// Global variables
 let mainWindow = null
 let tray = null
 let httpServer = null
 const HTTP_PORT = 8765
 
-// Estado de la extensión
+// Extension state
 let extensionConnections = new Set()
 let lastExtensionActivity = null
 let extensionStats = {
@@ -46,7 +46,7 @@ function createWindow() {
     mainWindow.show()
   })
 
-  // Prevenir que la ventana se cierre, en su lugar ocultarla
+  // Prevent window from closing, hide it instead
   mainWindow.on('close', (event) => {
     if (!app.isQuiting) {
       event.preventDefault()
@@ -59,6 +59,40 @@ function createWindow() {
     return { action: 'deny' }
   })
 
+  // Check for updates
+  if (!is.dev) {
+    autoUpdater.checkForUpdates()
+  }
+
+  // Update Events
+  autoUpdater.on('checking-for-update', () => {
+    mainWindow.webContents.send('update:status', { status: 'checking' })
+  })
+
+  autoUpdater.on('update-available', (info) => {
+    mainWindow.webContents.send('update:status', { status: 'available', info })
+    // Optionally auto download:
+    // autoUpdater.downloadUpdate()
+  })
+
+  autoUpdater.on('update-not-available', (info) => {
+    mainWindow.webContents.send('update:status', { status: 'not-available', info })
+  })
+
+  autoUpdater.on('error', (err) => {
+    mainWindow.webContents.send('update:status', { status: 'error', error: err.message })
+  })
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    mainWindow.webContents.send('update:status', { status: 'downloading', progress: progressObj })
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow.webContents.send('update:status', { status: 'downloaded', info })
+    // Ask user or auto install?
+    //autoUpdater.quitAndInstall() 
+  })
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -69,13 +103,13 @@ function createWindow() {
 }
 
 function createTray() {
-  // Crear el tray con el icono de la aplicación
+  // Create tray with app icon
   tray = new Tray(icon)
   
-  // Crear el menú contextual
+  // Create context menu
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Abrir',
+      label: 'Open',
       click: () => {
         if (mainWindow) {
           mainWindow.show()
@@ -84,7 +118,7 @@ function createTray() {
       }
     },
     {
-      label: 'Cerrar',
+      label: 'Close',
       click: () => {
         app.isQuiting = true
         app.quit()
@@ -92,11 +126,11 @@ function createTray() {
     }
   ])
   
-  // Configurar el tray
+  // Configure tray
   tray.setToolTip('Account Manager')
   tray.setContextMenu(contextMenu)
   
-  // Hacer doble click para mostrar/ocultar la ventana
+  // Double click to show/hide window
   tray.on('double-click', () => {
     if (mainWindow) {
       if (mainWindow.isVisible()) {
@@ -109,23 +143,23 @@ function createTray() {
   })
 }
 
-// Crear servidor HTTP para comunicación con la extensión de Chrome
+// Create HTTP server for Chrome extension communication
 function createHttpServer() {
   httpServer = http.createServer((req, res) => {
-    // Configurar CORS para permitir requests desde la extensión
+    // Configure CORS to allow requests from extension
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     res.setHeader('Content-Type', 'application/json')
 
-    // Manejar preflight requests
+    // Handle preflight requests
     if (req.method === 'OPTIONS') {
       res.writeHead(200)
       res.end()
       return
     }
 
-    // Trackear actividad de extensión
+    // Track extension activity
     const clientId = req.headers['x-client-id'] || `${req.connection.remoteAddress}-${Date.now()}`
     lastExtensionActivity = new Date()
     
@@ -141,7 +175,7 @@ function createHttpServer() {
 
     try {
       if (req.method === 'GET' && pathname === '/status') {
-        // Endpoint para verificar estado de la aplicación
+        // Endpoint to check app status
         res.writeHead(200)
         res.end(JSON.stringify({
           success: true,
@@ -153,7 +187,7 @@ function createHttpServer() {
         }))
 
       } else if (req.method === 'POST' && pathname === '/form-data') {
-        // Endpoint para obtener datos de formularios
+        // Endpoint to get form data
         let body = ''
         req.on('data', chunk => {
           body += chunk.toString()
@@ -171,7 +205,7 @@ function createHttpServer() {
               data: formData
             }))
           } catch (error) {
-            console.error('Error procesando datos de formulario:', error)
+            console.error('Error processing form data:', error)
             res.writeHead(500)
             res.end(JSON.stringify({
               success: false,
@@ -181,7 +215,7 @@ function createHttpServer() {
         })
 
       } else if (req.method === 'POST' && pathname === '/save-form') {
-        // Endpoint para guardar datos de formularios
+        // Endpoint to save form data
         let body = ''
         req.on('data', chunk => {
           body += chunk.toString()
@@ -195,10 +229,10 @@ function createHttpServer() {
             res.writeHead(200)
             res.end(JSON.stringify({
               success: true,
-              message: 'Datos guardados correctamente'
+              message: 'Data saved successfully'
             }))
           } catch (error) {
-            console.error('Error guardando datos de formulario:', error)
+            console.error('Error saving form data:', error)
             res.writeHead(500)
             res.end(JSON.stringify({
               success: false,
@@ -208,7 +242,7 @@ function createHttpServer() {
         })
 
       } else if (req.method === 'POST' && pathname === '/save-password-settings') {
-        // Endpoint para guardar ajustes de contraseña desde la extensión
+        // Endpoint to save password settings from extension
         let body = ''
         req.on('data', chunk => {
           body += chunk.toString()
@@ -219,7 +253,7 @@ function createHttpServer() {
             const settings = JSON.parse(body)
             setData('passwordSettings', settings)
             
-            // Notificar al renderer de la app que los ajustes cambiaron
+            // Notify app renderer that settings changed
             if (mainWindow) {
               mainWindow.webContents.send('storage:updated', { key: 'passwordSettings' })
             }
@@ -227,10 +261,10 @@ function createHttpServer() {
             res.writeHead(200)
             res.end(JSON.stringify({
               success: true,
-              message: 'Ajustes de contraseña guardados'
+              message: 'Password settings saved'
             }))
           } catch (error) {
-            console.error('Error guardando ajustes de contraseña:', error)
+            console.error('Error saving password settings:', error)
             res.writeHead(500)
             res.end(JSON.stringify({
               success: false,
@@ -240,7 +274,7 @@ function createHttpServer() {
         })
 
       } else if (req.method === 'POST' && pathname === '/show-app') {
-        // Endpoint para mostrar la aplicación
+        // Endpoint to show the app
         if (mainWindow) {
           if (mainWindow.isMinimized()) mainWindow.restore()
           mainWindow.show()
@@ -252,44 +286,44 @@ function createHttpServer() {
         res.writeHead(200)
         res.end(JSON.stringify({
           success: true,
-          message: 'Aplicación mostrada'
+          message: 'Application shown'
         }))
 
       } else {
-        // Endpoint no encontrado
+        // Endpoint not found
         res.writeHead(404)
         res.end(JSON.stringify({
           success: false,
-          error: 'Endpoint no encontrado'
+          error: 'Endpoint not found'
         }))
       }
     } catch (error) {
-      console.error('Error en servidor HTTP:', error)
+      console.error('HTTP Server Error:', error)
       res.writeHead(500)
       res.end(JSON.stringify({
         success: false,
-        error: 'Error interno del servidor'
+        error: 'Internal server error'
       }))
     }
   })
 
   httpServer.listen(HTTP_PORT, 'localhost', () => {
-    console.log(`Servidor HTTP para extensión ejecutándose en http://localhost:${HTTP_PORT}`)
+    console.log(`HTTP Extension Server running at http://localhost:${HTTP_PORT}`)
   })
 
   httpServer.on('error', (error) => {
-    console.error('Error en servidor HTTP:', error)
+    console.error('HTTP Server Error:', error)
   })
 }
 
-// Función para obtener datos de formularios para la extensión
+// Function to get form data for extension
 async function getFormDataForExtension(requestData) {
-  // Verificar que el vault esté desbloqueado
+  // Check if vault is unlocked
   if (!currentProfile || !vaultKeys.has(currentProfile)) {
-    throw new Error('Vault bloqueado. Por favor, desbloquea la aplicación primero.')
+    throw new Error('Vault locked. Please unlock the application first.')
   }
 
-  // Obtener datos del perfil actual
+  // Get current profile data
   const profileData = {
     personal: {},
     email: {},
@@ -300,10 +334,10 @@ async function getFormDataForExtension(requestData) {
     const autoFormData = getData('autoFormData') || {}
     console.log('Extension requesting data. Found autoFormData:', autoFormData)
     
-    // Obtener datos de email
+    // Get email data
     profileData.emails = autoFormData.email || []
     
-    // Obtener otros datos si es necesario
+    // Get other data if needed
     profileData.addresses = autoFormData.address || []
     profileData.personal = autoFormData.personal?.[0] || {}
     profileData.creditCards = autoFormData.creditCard || []
@@ -334,31 +368,31 @@ async function getFormDataForExtension(requestData) {
 
     return profileData
   } catch (error) {
-    console.error('Error obteniendo datos para extensión:', error)
-    throw new Error('Error al obtener datos del perfil')
+    console.error('Error getting data for extension:', error)
+    throw new Error('Error retrieving profile data')
   }
 }
 
-// Función para guardar datos de formularios desde la extensión
+// Function to save form data from extension
 async function saveFormDataFromExtension(requestData) {
-  // Verificar que el vault esté desbloqueado
+  // Check if vault is unlocked
   if (!currentProfile || !vaultKeys.has(currentProfile)) {
-    throw new Error('Vault bloqueado. Por favor, desbloquea la aplicación primero.')
+    throw new Error('Vault locked. Please unlock the application first.')
   }
 
   try {
     const { formData, url, formType } = requestData
 
-    // Guardar según el tipo de formulario detectado
+    // Save based on detected form type
     if (formType === 'email' && formData.email) {
       const existingEmails = getData('autoform_email') || []
       const newEmail = {
         id: Date.now().toString(),
-        name: formData.name || 'Perfil desde extensión',
+        name: formData.name || 'Profile from extension',
         email: formData.email
       }
       
-      // Verificar si el email ya existe
+      // Check if email already exists
       const emailExists = existingEmails.some(e => e.email === newEmail.email)
       if (!emailExists) {
         existingEmails.push(newEmail)
@@ -370,7 +404,7 @@ async function saveFormDataFromExtension(requestData) {
       const existingAddresses = getData('autoform_address') || []
       const newAddress = {
         id: Date.now().toString(),
-        name: 'Dirección desde extensión',
+        name: 'Address from extension',
         street: formData.street || '',
         city: formData.city || '',
         state: formData.state || '',
@@ -395,10 +429,10 @@ async function saveFormDataFromExtension(requestData) {
       setData('autoform_personal', updatedPersonal)
     }
 
-    console.log('Datos guardados desde extensión:', { formType, url })
+    console.log('Data saved from extension:', { formType, url })
   } catch (error) {
-    console.error('Error guardando datos desde extensión:', error)
-    throw new Error('Error al guardar datos del formulario')
+    console.error('Error saving data from extension:', error)
+    throw new Error('Error saving form data')
   }
 }
 
@@ -442,7 +476,7 @@ app.whenReady().then(() => {
   createTray()
   createHttpServer()
 
-  // Configurar inicio automático en producción
+  // Configure auto start in production
   if (!is.dev) {
     app.setLoginItemSettings({
       openAtLogin: true,
@@ -457,14 +491,14 @@ app.whenReady().then(() => {
   })
 })
 
-// No cerrar la aplicación cuando se cierran todas las ventanas
-// La aplicación seguirá corriendo en el tray
+// Do not quit when all windows are closed
+// The app will effectively run in tray
 app.on('window-all-closed', () => {
-  // No hacer nada, mantener la app corriendo en el tray
-  // Solo cerrar si se llama explícitamente a quit
+  // Do nothing, keep app running in tray
+  // Only quit if quit is explicitly called
 })
 
-// Limpiar el tray antes de cerrar la aplicación
+// Clean up tray before quitting
 app.on('before-quit', () => {
   app.isQuiting = true
   if (tray) {
@@ -478,7 +512,11 @@ app.on('before-quit', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 import path from 'path'
+import { autoUpdater } from 'electron-updater'
 import Database from 'better-sqlite3'
+
+autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = true
 
 const dbFolder = 'C:/AccountManager'
 // ensure folders exist
@@ -709,10 +747,10 @@ ipcMain.handle('app:getVersion', async () => {
   return app.getVersion()
 })
 
-// Handler para obtener estado de la extensión
+// Handler to get extension status
 ipcMain.handle('extension:getStatus', async () => {
   const now = new Date()
-  const isConnected = lastExtensionActivity && (now - lastExtensionActivity) < 30000 // 30 segundos
+  const isConnected = lastExtensionActivity && (now - lastExtensionActivity) < 30000 // 30 seconds
   
   return {
     connected: isConnected,
@@ -742,7 +780,7 @@ ipcMain.handle('window:toggleMaximize', async () => {
 })
 
 ipcMain.handle('window:close', async () => {
-  // En lugar de cerrar, ocultar la ventana al tray
+  // Instead of closing, hide the window to tray
   if (mainWindow) {
     mainWindow.hide()
   }
@@ -752,6 +790,14 @@ ipcMain.handle('links:openExternal', async (_e, url) => {
   if (typeof url === 'string' && url.length > 0) {
     await shell.openExternal(url)
   }
+})
+
+ipcMain.handle('app:installUpdate', () => {
+  autoUpdater.quitAndInstall()
+})
+
+ipcMain.handle('app:startDownloadUpdate', () => {
+  autoUpdater.downloadUpdate()
 })
 
 // Vault IPC handlers

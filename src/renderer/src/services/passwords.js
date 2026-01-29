@@ -36,7 +36,7 @@ export function generatePassword(settings) {
       if (ch === '{') {
         const end = raw.indexOf('}', i + 1)
         if (end === -1) {
-          // sin cierre: tratar como literal
+          // no closing brace: treat as literal
           out += ch
           i += 1
           continue

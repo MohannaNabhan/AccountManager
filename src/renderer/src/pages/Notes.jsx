@@ -13,7 +13,7 @@ import { exportCSV, exportPDF, toCSV } from '@/services/export'
 export default function Notes() {
   const [notes, setNotes] = useState([])
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('todas')
+  const [category, setCategory] = useState('all')
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
@@ -31,7 +31,7 @@ export default function Notes() {
     return notes.filter((n) => {
       const text = `${n.title} ${n.content}`.toLowerCase()
       const matchSearch = text.includes(search.toLowerCase())
-      const matchCategory = category === 'todas' || (n.category || '') === category
+      const matchCategory = category === 'all' || (n.category || '') === category
       return matchSearch && matchCategory
     })
   }, [notes, search, category])
@@ -41,7 +41,7 @@ export default function Notes() {
       id: crypto.randomUUID(),
       title,
       content,
-      category: category === 'todas' ? '' : category,
+      category: category === 'all' ? '' : category,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
       attachments,
       createdAt: Date.now(),
@@ -51,7 +51,7 @@ export default function Notes() {
     setContent('')
     setTags('')
     setAttachments([])
-    toast.success('Nota creada')
+    toast.success('Note created')
   }
 
   const addAttachment = async () => {
@@ -63,69 +63,69 @@ export default function Notes() {
 
   const exportNotesCSV = async () => {
     const cols = [
-      { key: 'title', header: 'Título' },
-      { key: 'category', header: 'Categoría' },
-      { key: 'createdAt', header: 'Fecha' },
+      { key: 'title', header: 'Title' },
+      { key: 'category', header: 'Category' },
+      { key: 'createdAt', header: 'Date' },
     ]
     const rows = notes.map((n) => ({ ...n, createdAt: new Date(n.createdAt).toLocaleString() }))
     const csv = toCSV(rows, cols)
-    await exportCSV('notas', csv)
+    await exportCSV('notes', csv)
   }
 
   const exportNotesPDF = async () => {
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Notas</title></head><body><h1>Notas</h1>${notes
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Notes</title></head><body><h1>Notes</h1>${notes
       .map((n) => `<h2>${escapeHTML(n.title)}</h2><div>${escapeHTML(n.category || '')}</div><p>${escapeHTML(n.content).replace(/\n/g, '<br/>')}</p>`)
       .join('')} </body></html>`
-    await exportPDF('notas', html)
+    await exportPDF('notes', html)
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
-        <Input placeholder="Buscar en notas" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input placeholder="Search in notes" value={search} onChange={(e) => setSearch(e.target.value)} />
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Categoría" /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Category" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="todas">Todas</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="general">General</SelectItem>
-            <SelectItem value="técnica">Técnica</SelectItem>
-            <SelectItem value="recordatorio">Recordatorio</SelectItem>
+            <SelectItem value="technical">Technical</SelectItem>
+            <SelectItem value="reminder">Reminder</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="secondary" onClick={exportNotesCSV}>Exportar CSV</Button>
-        <Button variant="secondary" onClick={exportNotesPDF}>Exportar PDF</Button>
+        <Button variant="secondary" onClick={exportNotesCSV}>Export CSV</Button>
+        <Button variant="secondary" onClick={exportNotesPDF}>Export PDF</Button>
       </div>
 
       <Separator />
       <div className="space-y-3">
-        <div className="text-sm text-muted-foreground">Nueva nota</div>
+        <div className="text-sm text-muted-foreground">New note</div>
         <MarkdownEditor value={content} onChange={setContent} title={title} onTitleChange={setTitle} />
         <div className="flex gap-2">
-          <Input placeholder="Etiquetas (separadas por coma)" value={tags} onChange={(e) => setTags(e.target.value)} />
+          <Input placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Categoría" /></SelectTrigger>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Category" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="todas">Sin categoría</SelectItem>
+              <SelectItem value="all">No category</SelectItem>
               <SelectItem value="general">General</SelectItem>
-              <SelectItem value="técnica">Técnica</SelectItem>
-              <SelectItem value="recordatorio">Recordatorio</SelectItem>
+              <SelectItem value="technical">Technical</SelectItem>
+              <SelectItem value="reminder">Reminder</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={addAttachment}>Adjuntar archivo</Button>
-          <Button onClick={createNote}>Guardar nota</Button>
+          <Button variant="outline" onClick={addAttachment}>Attach file</Button>
+          <Button onClick={createNote}>Save note</Button>
         </div>
-        <div className="text-xs text-muted-foreground">Adjuntos: {attachments.map((a) => a.filename).join(', ')}</div>
+        <div className="text-xs text-muted-foreground">Attachments: {attachments.map((a) => a.filename).join(', ')}</div>
       </div>
 
       <Separator />
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Título</TableHead>
-            <TableHead>Categoría</TableHead>
-            <TableHead>Etiquetas</TableHead>
-            <TableHead>Fecha</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Tags</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -138,8 +138,8 @@ export default function Notes() {
               <TableCell className="flex gap-2">
                 <Button variant="secondary" onClick={() => {
                   setTitle(n.title); setContent(n.content); setTags((n.tags || []).join(', ')); setAttachments(n.attachments || [])
-                }}>Editar</Button>
-                <Button variant="destructive" onClick={async () => { await deleteNote(n.id); toast.success('Nota eliminada') }}>Eliminar</Button>
+                }}>Edit</Button>
+                <Button variant="destructive" onClick={async () => { await deleteNote(n.id); toast.success('Note deleted') }}>Delete</Button>
               </TableCell>
             </TableRow>
           ))}

@@ -38,7 +38,14 @@ const api = {
   },
   app: {
     reload: () => electronAPI.ipcRenderer.invoke('app:reload'),
-    version: () => electronAPI.ipcRenderer.invoke('app:getVersion')
+    version: () => electronAPI.ipcRenderer.invoke('app:getVersion'),
+    installUpdate: () => electronAPI.ipcRenderer.invoke('app:installUpdate'),
+    startDownloadUpdate: () => electronAPI.ipcRenderer.invoke('app:startDownloadUpdate'),
+    onUpdateStatus: (callback) => {
+      const handler = (_event, payload) => callback(payload)
+      electronAPI.ipcRenderer.on('update:status', handler)
+      return () => electronAPI.ipcRenderer.removeListener('update:status', handler)
+    }
   },
   window: {
     minimize: () => electronAPI.ipcRenderer.invoke('window:minimize'),
